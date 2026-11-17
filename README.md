@@ -19,7 +19,7 @@
   Tiancheng Li, Zhenzi Li, Alen Alempijevic, Shoudong Huang, Australasian Conference on Robotics and
   Automation (ACRA), 2026.
 - **Tutorial**: 📂 [`example/example.ipynb`](example/example.ipynb), the six stages on real radar data. It needs no ROS and no dataset download.
-- **Released estimates**: 📂 [`results/`](results), DRG's estimate for each of the 51,940 scan pairs behind the paper's tables, and the trajectories of all six sequences with ground truth, ready for evo.
+- **Released estimates**: 📂 [`results/`](results), DRG's estimate for each of the 51,940 scan pairs behind the paper's tables, and the trajectories of all six sequences with ground truth and plots, ready for evo.
 
 <p align="center">
   <img src="docs/figures/drg_loop3.gif" alt="DRG on NTU4DRadLM loop3" width="640"/>
@@ -73,10 +73,15 @@ registration.** At 12 Hz the fused translation is 93 % Doppler, and the same fus
 APDGICP gives the same accuracy.
 
 <p align="center"><img src="docs/figures/trajectories.png" width="900"></p>
-<p align="center"><em>Chained per-pair estimates (no keyframes, smoothing or loop closure) on the four longest sequences (paper, Fig. 4).</em></p>
+<p align="center"><em>Chained per-pair estimates (no keyframes, smoothing or loop closure) on the four longest sequences (paper, Fig. 4). Each segment starts at the ground-truth pose of its first scan.</em></p>
 
 All numbers above can be recomputed from the released estimates in seconds; see
-[Reproducing the paper](#reproducing-the-paper).
+[Reproducing the paper result](#reproducing-the-paper-result). A plot of every sequence is in
+[`results/trajectories/<sequence>/trajectory.pdf`](results/README.md#odometry-trajectories).
+
+**Supplementary, not in the paper:** [`results/slam_backend/`](results/slam_backend/README.md) runs
+the same odometry as the front end of the full 4DRadarSLAM system (keyframes, pose graph, loop
+closure) and gives the absolute trajectory error of each sequence.
 
 ## 🍎 Tutorial (Python)
 
@@ -251,12 +256,14 @@ On the tutorial window, interpolation lowers the APE RMSE from 0.23 m (nearest s
 `evo_rpe` gives a mean of 0.0442 m against the paper's 0.0440 m; the two differ only in how the error
 transform is composed.
 
-**The paper's trajectories.** [`results/trajectories/<sequence>/`](results/README.md#trajectories-for-evo)
-holds DRG's trajectory and the ground truth at the same stamps for all six sequences of the paper,
-so evo runs on them directly:
+**The paper's trajectories.** [`results/trajectories/<sequence>/`](results/README.md#odometry-trajectories)
+holds DRG's trajectory, the ground truth at the same stamps and a plot (`trajectory.pdf`) for all
+six sequences of the paper. As in Fig. 4, each segment starts at the ground-truth pose of its first
+scan:
 
 ```bash
-evo_ape tum results/trajectories/loop3/stamp_gt_traj.txt results/trajectories/loop3/stamp_est_traj.txt -va --plot
+cd results/trajectories
+evo_traj tum loop3/stamp_est_traj.txt --ref loop3/stamp_gt_traj.txt --plot --plot_mode xy
 ```
 
 ## Reproducing the paper result
@@ -274,8 +281,8 @@ python3 scripts/evaluate_trajectory.py --est results/relative_poses/loop3.txt --
 ```
 
 `results/trajectories/` holds the same estimates chained into trajectories for evo, with the
-ground truth at the same stamps; `scripts/export_trajectories.py` rebuilds them
-([results/README.md](results/README.md#trajectories-for-evo)).
+ground truth at the same stamps; `scripts/export_trajectories.py` rebuilds them and
+`scripts/plot_trajectories.py` their plots ([results/README.md](results/README.md#odometry-trajectories)).
 
 **(b) Re-run DRG on the paper's input.** The paper registers the per-scan clouds that 4DRadarSLAM
 (Go-RIO version) writes with its `/radar_graph_slam/dump` service (one folder per scan, with
@@ -361,7 +368,8 @@ DRG/
 ├── scripts/                     # offline registration, evaluation and reproduction
 ├── results/
 │   ├── relative_poses/          # DRG's per-pair estimates behind the paper's tables
-│   └── trajectories/            # the same, chained into trajectories + ground truth (TUM, for evo)
+│   ├── trajectories/            # the same, chained: trajectories + ground truth (TUM, for evo) + plots
+│   └── slam_backend/            # not in the paper: DRG as the front end of the full 4DRadarSLAM
 ├── tests/                       # unit tests + the paper's estimates of the 37 windowed sets
 └── docs/PARAMETERS.md           # what every parameter does and how it was chosen
 ```

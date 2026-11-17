@@ -12,7 +12,7 @@ Writes, for each sequence:
                                                     (linear / SLERP interpolation, as in the paper)
 
     python scripts/export_trajectories.py --datasets config/datasets.yaml
-    evo_ape tum results/trajectories/loop3/stamp_gt_traj.txt results/trajectories/loop3/stamp_est_traj.txt -va
+    evo_traj tum results/trajectories/loop3/stamp_est_traj.txt --ref results/trajectories/loop3/stamp_gt_traj.txt --plot
 
 config/datasets.yaml gives the ground truth (gt_odom.txt) and its gap limit for each sequence; see
 config/datasets_example.yaml. The dump paths in that file are not used here.

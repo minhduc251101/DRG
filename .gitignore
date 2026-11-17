@@ -224,3 +224,4 @@ config/datasets.yaml
 results/*/
 !results/relative_poses/
 !results/trajectories/
+!results/slam_backend/
