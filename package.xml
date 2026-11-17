@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>drg</name>
+  <version>1.0.0</version>
+  <description>
+    DRG (Doppler-RCS Gated registration): training-free scan-to-scan registration of
+    consecutive 4D radar scans. Paper: "4D Radar Scan-to-Scan Registration using Doppler
+    Translation Fusion", ACRA 2026.
+  </description>
+  <maintainer email="VanMinhDuc.Nguyen@student.uts.edu.au">Van Minh Duc Nguyen</maintainer>
+  <license>MIT</license>
+  <url type="repository">https://github.com/minhduc251101/DRG</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>rosbag</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>rviz</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-scipy</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <!-- open3d==0.18.0 is installed with pip (requirements.txt), it has no rosdep key -->
+</package>

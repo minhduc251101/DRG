@@ -218,3 +218,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# DRG: local paths and run outputs
+config/datasets.yaml
+results/*/
+!results/relative_poses/

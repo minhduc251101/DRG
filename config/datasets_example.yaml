@@ -1,0 +1,12 @@
+# Where the per-scan dumps and ground truth of NTU4DRadLM live (used by
+# scripts/reproduce_windowed_sets.py). Copy to datasets.yaml and edit the paths
+# (absolute, or relative to this file).
+# Dumps: 4DRadarSLAM keyframe dumps (/radar_graph_slam/dump) with the keyframe thresholds set
+# to 0, i.e. one folder per scan; garden uses the default ~1 s keyframes.
+# See "Reproducing the paper" in README.md.
+cp:     {dump: /data/dumps/cp,     gt: /data/NTU4DRadLM/cp/gt_odom.txt,     max_gt_gap: 0.1}
+garden: {dump: /data/dumps/garden, gt: /data/NTU4DRadLM/garden/gt_odom.txt, max_gt_gap: 0.1}
+nyl:    {dump: /data/dumps/nyl,    gt: /data/NTU4DRadLM/nyl/gt_odom.txt,    max_gt_gap: 0.15}
+loop1:  {dump: /data/dumps/loop1,  gt: /data/NTU4DRadLM/loop1/gt_odom.txt,  max_gt_gap: 0.1}
+loop2:  {dump: /data/dumps/loop2,  gt: /data/NTU4DRadLM/loop2/gt_odom.txt,  max_gt_gap: 0.1}
+loop3:  {dump: /data/dumps/loop3,  gt: /data/NTU4DRadLM/loop3/gt_odom.txt,  max_gt_gap: 0.1}

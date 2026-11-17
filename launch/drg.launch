@@ -1,0 +1,25 @@
+<launch>
+  <!-- DRG radar odometry node. Use ntu4dradlm.launch to also play a dataset bag. -->
+  <arg name="input_topic"   default="/radar_enhanced_pcl"/>
+  <arg name="cloud_type"    default="PointCloud"/>          <!-- PointCloud | PointCloud2 -->
+  <arg name="rotate_to_body" default="true"/>              <!-- raw NTU4DRadLM radar frame -> Livox axes -->
+  <arg name="params_file"   default="$(find drg)/config/drg.yaml"/>
+  <arg name="norm_stats"    default="$(find drg)/config/norm_stats/cp.yaml"/>
+  <arg name="ransac_trials" default="40"/>                 <!-- paper: 40; 1 gives the same estimates, ~13x faster -->
+  <arg name="output_dir"    default=""/>                   <!-- write TUM files for evo here -->
+  <arg name="rviz"          default="true"/>
+
+  <node pkg="drg" type="drg_odometry_node.py" name="drg_odometry" output="screen">
+    <rosparam file="$(arg params_file)" command="load"/>
+    <param name="drg/ransac_trials" value="$(arg ransac_trials)"/>
+    <param name="norm_stats"     value="$(arg norm_stats)"/>
+    <param name="cloud_type"     value="$(arg cloud_type)"/>
+    <param name="rotate_to_body" value="$(arg rotate_to_body)"/>
+    <param name="output_dir"     value="$(arg output_dir)"/>
+    <param name="odom_frame"     value="odom"/>
+    <param name="body_frame"     value="radar_body"/>
+    <remap from="~input" to="$(arg input_topic)"/>
+  </node>
+
+  <node if="$(arg rviz)" pkg="rviz" type="rviz" name="rviz" args="-d $(find drg)/rviz/drg.rviz"/>
+</launch>

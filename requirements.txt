@@ -1,0 +1,9 @@
+# Open3D 0.18.0 is the version used for the paper; the estimates were verified against it.
+# Other Open3D versions may draw different RANSAC samples and were not tested.
+open3d==0.18.0
+numpy>=1.20
+scipy>=1.6
+pyyaml
+# evaluation and tutorial
+evo>=1.20
+matplotlib

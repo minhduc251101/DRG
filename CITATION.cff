@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use DRG, please cite the paper below."
+title: "DRG: 4D Radar Scan-to-Scan Registration using Doppler Translation Fusion"
+license: MIT
+repository-code: "https://github.com/minhduc251101/DRG"
+authors:
+  - family-names: Nguyen
+    given-names: Van Minh Duc
+  - family-names: Li
+    given-names: Tiancheng
+  - family-names: Li
+    given-names: Zhenzi
+  - family-names: Alempijevic
+    given-names: Alen
+  - family-names: Huang
+    given-names: Shoudong
+preferred-citation:
+  type: conference-paper
+  title: "4D Radar Scan-to-Scan Registration using Doppler Translation Fusion"
+  collection-title: "Proceedings of the Australasian Conference on Robotics and Automation (ACRA)"
+  year: 2026
+  authors:
+    - family-names: Nguyen
+      given-names: Van Minh Duc
+    - family-names: Li
+      given-names: Tiancheng
+    - family-names: Li
+      given-names: Zhenzi
+    - family-names: Alempijevic
+      given-names: Alen
+    - family-names: Huang
+      given-names: Shoudong

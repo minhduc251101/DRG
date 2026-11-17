@@ -1,0 +1,14 @@
+# Radar-channel statistics of loop_true_fullpose: every 10th of 5259 scans.
+norm_stats:
+  rcs:
+    mean: 12.674407958984375
+    std: 3.9859116077423096
+  doppler_weight:
+    mean: 0.9645337532032283
+    std: 0.061858083346421115
+  density:
+    mean: 13.583566631234724
+    std: 17.593034674068466
+  height:
+    mean: -0.3327212333679199
+    std: 2.1610777378082275

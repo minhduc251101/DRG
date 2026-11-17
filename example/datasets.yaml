@@ -1,0 +1,3 @@
+# The window shipped in example/data (paths relative to this file), for
+#   python scripts/reproduce_windowed_sets.py --datasets example/datasets.yaml --sets loop3_set4_5692
+loop3: {dump: data/loop3_set4, gt: data/loop3_gt_odom_excerpt.txt, max_gt_gap: 0.1}

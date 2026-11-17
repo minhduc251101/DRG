@@ -1,0 +1,30 @@
+<launch>
+  <!-- Play one NTU4DRadLM sequence and run DRG on it, e.g.
+
+       roslaunch drg ntu4dradlm.launch sequence:=loop3 output_dir:=/tmp/drg_loop3 \
+           bags:="$(ls /data/NTU4DRadLM/loop3/*.bag | xargs)"
+
+       `bags` is a space-separated list, played in the given order (multi-part sequences).
+       DRG needs ~0.4-5 s per scan pair, so the bag is played slowly. The node never drops a scan,
+       it only falls behind; wait for the last "[DRG] scan N" line before stopping. -->
+  <arg name="sequence"      default="cp"/>                 <!-- cp | garden | nyl | loop1 | loop2 | loop3 -->
+  <arg name="bags"/>
+  <arg name="rate"          default="0.05"/>
+  <arg name="ransac_trials" default="40"/>
+  <arg name="output_dir"    default=""/>
+  <arg name="rviz"          default="true"/>
+  <arg name="play_args"     default=""/>                   <!-- extra rosbag play options, e.g. "-s 60 -u 20" -->
+
+  <param name="use_sim_time" value="true"/>
+
+  <include file="$(find drg)/launch/drg.launch">
+    <arg name="norm_stats"    value="$(find drg)/config/norm_stats/$(arg sequence).yaml"/>
+    <arg name="ransac_trials" value="$(arg ransac_trials)"/>
+    <arg name="output_dir"    value="$(arg output_dir)"/>
+    <arg name="rviz"          value="$(arg rviz)"/>
+  </include>
+
+  <!-- Playback waits for a subscriber (the DRG node), so no scan is missed. -->
+  <node pkg="rosbag" type="play" name="player" output="screen"
+        args="--clock --wait-for-subscribers -r $(arg rate) $(arg play_args) --topics /radar_enhanced_pcl --bags $(arg bags)"/>
+</launch>

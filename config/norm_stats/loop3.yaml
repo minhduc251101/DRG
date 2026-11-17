@@ -1,0 +1,14 @@
+# Radar-channel statistics of dump: every 10th of 7620 scans.
+norm_stats:
+  rcs:
+    mean: 11.30358600616455
+    std: 3.564345121383667
+  doppler_weight:
+    mean: 0.9153466018891367
+    std: 0.14453931554705324
+  density:
+    mean: 4.131095878026003
+    std: 6.4609154104639925
+  height:
+    mean: 0.7833390831947327
+    std: 1.8926467895507812

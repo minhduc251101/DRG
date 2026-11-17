@@ -1,0 +1,46 @@
+# DRG parameters - the values used for every result in the paper (Algorithm 1).
+# [tuned]  = chosen on the five tuning sets (carpark sets 1-3, garden sets 1-2), see docs/PARAMETERS.md
+# [fixed]  = taken from the literature / the original implementation, not tuned
+# [radar]  = property of the sensor / its field of view
+drg:
+  # ---- Stage 1: Soft-REVE ego-velocity ---------------------------------------------------
+  min_range: 0.25              # [radar] m
+  max_range: 100.0             # [radar] m
+  min_rcs: 0.0                 # [radar] dB
+  max_azimuth_deg: 75.0        # [radar] deg
+  max_elevation_deg: 45.0      # [radar] deg
+  reve_outlier_prob: 0.4       # [fixed] REVE default
+  reve_success_prob: 0.9999    # [fixed] REVE default
+  reve_inlier_threshold: 0.15  # [fixed] m/s, REVE default
+  sigma_floor: 0.10            # [fixed] m/s, clip of the MAD residual scale
+  sigma_cap: 0.15              # [fixed] m/s
+  zero_velocity: 0.05          # [fixed] m/s, below: all weights = 1
+
+  # ---- Stage 2: hybrid 37-D descriptor -----------------------------------------------------
+  fpfh_normal_radius: 0.2      # [fixed] m (2 x 0.1 m voxel, standard FPFH setting)
+  fpfh_normal_max_nn: 30
+  fpfh_feature_radius: 0.5     # [fixed] m (5 x 0.1 m voxel)
+  fpfh_feature_max_nn: 100
+  density_radius: 0.3          # [fixed] m
+  zscore_clip: 5.0             # [fixed]
+  radar_block_weight: 0.5      # [fixed] alpha, equal weight of FPFH and radar blocks
+
+  # ---- Stage 4: Doppler-RCS gate -----------------------------------------------------------
+  tau_rcs: 1.0                 # [tuned] dB  - depends on the RCS repeatability of the radar
+  tau_residual: 0.01           # [tuned] m/s
+
+  # ---- Stage 5: RANSAC + truncated-Cauchy IRLS ---------------------------------------------
+  ransac_trials: 40            # [fixed] 1 trial gave identical estimates on all 1109 windowed pairs
+  ransac_max_iterations: 50000
+  ransac_confidence: 0.999
+  ransac_edge_ratio: 0.9
+  inlier_distance: 0.3         # [tuned] m, RANSAC inlier distance = IRLS truncation r_max
+  cauchy_c: 0.1                # [tuned] m
+  irls_iterations: 10
+  max_translation: 5.0         # [fixed] m, plausibility check
+  max_roll_pitch_deg: 10.0     # [fixed] deg, plausibility check
+  seed: 42
+
+  # ---- Stage 6: Doppler translation fusion -------------------------------------------------
+  sigma_v: 0.10                # [fixed] m/s, nominal ego-velocity accuracy (literature)
+  sigma_g: 0.03                # [fixed] m, nominal: per-pair geometric error on the tuning sets

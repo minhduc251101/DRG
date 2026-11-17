@@ -1,0 +1,48 @@
+Panels:
+  - Class: rviz/Displays
+    Name: Displays
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz/Grid
+      Name: Grid
+      Enabled: true
+      Cell Size: 10
+      Plane Cell Count: 100
+      Reference Frame: <Fixed Frame>
+    - Class: rviz/PointCloud2
+      Name: Radar scans (RCS)
+      Enabled: true
+      Topic: /drg_odometry/cloud_registered
+      Style: Points
+      Size (Pixels): 2
+      Color Transformer: Intensity
+      Channel Name: intensity
+      Decay Time: 30
+      Queue Size: 10
+    - Class: rviz/Path
+      Name: DRG trajectory
+      Enabled: true
+      Topic: /drg_odometry/path
+      Color: 255; 85; 0
+      Line Style: Lines
+    - Class: rviz/TF
+      Name: TF
+      Enabled: true
+      Marker Scale: 3
+  Enabled: true
+  Global Options:
+    Background Color: 30; 30; 30
+    Fixed Frame: odom
+    Frame Rate: 30
+  Tools:
+    - Class: rviz/MoveCamera
+    - Class: rviz/Interact
+  Views:
+    Current:
+      Class: rviz/TopDownOrtho
+      Name: Current View
+      Scale: 5
+      Target Frame: radar_body
+      X: 0
+      Y: 0

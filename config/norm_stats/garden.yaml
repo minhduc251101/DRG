@@ -1,0 +1,14 @@
+# Radar-channel statistics of loop_true_garden: every 10th of 273 scans.
+norm_stats:
+  rcs:
+    mean: 12.212323188781738
+    std: 3.3164517879486084
+  doppler_weight:
+    mean: 0.9660170774324142
+    std: 0.05591233527662163
+  density:
+    mean: 12.04014272238855
+    std: 15.83384369287651
+  height:
+    mean: -0.6216837763786316
+    std: 1.193684458732605
