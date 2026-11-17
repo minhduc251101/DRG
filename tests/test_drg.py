@@ -17,7 +17,8 @@ from scipy.spatial.transform import Rotation  # noqa: E402
 
 from drg import DRG, DRGParams, NormStats  # noqa: E402
 from drg.ego_velocity import doppler_residual, ransac_iterations, soft_reve  # noqa: E402
-from drg.evaluation import GroundTruth, pose_error  # noqa: E402
+from drg.evaluation import (  # noqa: E402
+    GroundTruth, chain_poses, chain_stamps, pose_error, read_relative_poses, relative_pose_line)
 from drg.fusion import doppler_translation, fusion_weight  # noqa: E402
 from drg.io import DumpSequence  # noqa: E402
 from drg.radar_frames import R_RADAR_TO_BODY  # noqa: E402
@@ -89,6 +90,29 @@ def test_weighted_svd_recovers_a_rigid_transform():
     t = np.array([[0.4], [-0.2], [0.05]])
     T = weighted_svd(A, R @ A + t, rng.uniform(0.1, 1, 50))
     assert np.allclose(T[:3, :3], R) and np.allclose(T[:3, 3:4], t)
+
+
+def test_relative_poses_split_at_missing_pairs_and_chain_back_to_the_poses(tmp_path):
+    rng = np.random.default_rng(4)
+    poses = []
+    for _ in range(5):
+        T = np.eye(4)
+        T[:3, :3] = Rotation.from_euler("xyz", rng.normal(0, 5, 3), degrees=True).as_matrix()
+        T[:3, 3] = rng.normal(0, 3, 3)
+        poses.append(T)
+    stamps = 100.0 + 0.1 * np.arange(5)
+    pairs = [(0, 1), (1, 2), (3, 4)]                                    # pair (2, 3) is missing
+    path = tmp_path / "relative_poses.txt"
+    path.write_text("".join(relative_pose_line(stamps[i], stamps[j], np.linalg.inv(poses[i]) @ poses[j])
+                            for i, j in pairs))
+
+    chains = read_relative_poses(str(path))
+    assert len(chains) == 2
+    for chain, first in zip(chains, (0, 3)):
+        frames = range(first, first + len(chain) + 1)
+        assert np.allclose(chain_stamps(chain), stamps[list(frames)])
+        for k, P_k in zip(frames, chain_poses(chain, start=poses[first])):
+            assert np.allclose(P_k, poses[k], atol=1e-9)
 
 
 def test_radar_to_body_rotation_is_a_small_proper_rotation():

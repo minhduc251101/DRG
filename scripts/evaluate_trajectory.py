@@ -22,18 +22,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 
 import numpy as np  # noqa: E402
 
-from drg.evaluation import GroundTruth, kitti_segments  # noqa: E402
-
-
-def read_chains(path):
-    """relative_poses.txt -> list of chains, each a list of (stamp_target, stamp_source, T)."""
-    chains = []
-    for row in np.loadtxt(path, ndmin=2):
-        T = np.vstack([row[2:14].reshape(3, 4), [0, 0, 0, 1]])
-        if not chains or chains[-1][-1][1] != row[0]:
-            chains.append([])                                    # pair does not continue the chain
-        chains[-1].append((row[0], row[1], T))
-    return chains
+from drg.evaluation import GroundTruth, chain_poses, chain_stamps, kitti_segments, read_relative_poses  # noqa: E402
 
 
 def main():
@@ -45,15 +34,11 @@ def main():
 
     gt = GroundTruth(args.gt, args.max_gt_gap)
     segments, n_chains = [], 0
-    for chain in read_chains(args.est):
-        stamps = [chain[0][0]] + [s for _, s, _ in chain]
-        gt_poses = [gt.pose_at(t) for t in stamps]
+    for chain in read_relative_poses(args.est):
+        gt_poses = [gt.pose_at(t) for t in chain_stamps(chain)]
         if any(p is None for p in gt_poses):
             sys.exit("a chained frame has no ground truth within --max-gt-gap")
-        est_poses = [np.eye(4)]
-        for _, _, T in chain:
-            est_poses.append(est_poses[-1] @ T)
-        segments.append(kitti_segments(gt_poses, est_poses))
+        segments.append(kitti_segments(gt_poses, chain_poses(chain)))
         n_chains += 1
 
     seg = np.concatenate([s for s in segments if len(s)])

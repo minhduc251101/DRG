@@ -19,7 +19,7 @@
   Tiancheng Li, Zhenzi Li, Alen Alempijevic, Shoudong Huang, Australasian Conference on Robotics and
   Automation (ACRA), 2026.
 - **Tutorial**: 📂 [`example/example.ipynb`](example/example.ipynb), the six stages on real radar data. It needs no ROS and no dataset download.
-- **Released estimates**: 📂 [`results/`](results), DRG's estimate for each of the 51,940 scan pairs behind the paper's tables.
+- **Released estimates**: 📂 [`results/`](results), DRG's estimate for each of the 51,940 scan pairs behind the paper's tables, and the trajectories of all six sequences with ground truth, ready for evo.
 
 <p align="center">
   <img src="docs/figures/drg_loop3.gif" alt="DRG on NTU4DRadLM loop3" width="640"/>
@@ -251,6 +251,14 @@ On the tutorial window, interpolation lowers the APE RMSE from 0.23 m (nearest s
 `evo_rpe` gives a mean of 0.0442 m against the paper's 0.0440 m; the two differ only in how the error
 transform is composed.
 
+**The paper's trajectories.** [`results/trajectories/<sequence>/`](results/README.md#trajectories-for-evo)
+holds DRG's trajectory and the ground truth at the same stamps for all six sequences of the paper,
+so evo runs on them directly:
+
+```bash
+evo_ape tum results/trajectories/loop3/stamp_gt_traj.txt results/trajectories/loop3/stamp_est_traj.txt -va --plot
+```
+
 ## Reproducing the paper
 
 There are three levels, from fastest to most complete.
@@ -264,6 +272,10 @@ python3 scripts/evaluate_pairs.py      --est results/relative_poses/loop3.txt --
 python3 scripts/evaluate_trajectory.py --est results/relative_poses/loop3.txt --gt /data/NTU4DRadLM/loop3/gt_odom.txt
 # nyl: add --max-gt-gap 0.15
 ```
+
+`results/trajectories/` holds the same estimates chained into trajectories for evo, with the
+ground truth at the same stamps; `scripts/export_trajectories.py` rebuilds them
+([results/README.md](results/README.md#trajectories-for-evo)).
 
 **(b) Re-run DRG on the paper's input.** The paper registers the per-scan clouds that 4DRadarSLAM
 (Go-RIO version) writes with its `/radar_graph_slam/dump` service (one folder per scan, with
@@ -347,7 +359,9 @@ DRG/
 │   └── norm_stats/<seq>.yaml    # descriptor normalisation statistics per sequence
 ├── example/                     # tutorial notebook + 31 scans of loop3 + ground truth
 ├── scripts/                     # offline registration, evaluation and reproduction
-├── results/relative_poses/      # DRG's per-pair estimates behind the paper's tables
+├── results/
+│   ├── relative_poses/          # DRG's per-pair estimates behind the paper's tables
+│   └── trajectories/            # the same, chained into trajectories + ground truth (TUM, for evo)
 ├── tests/                       # unit tests + the paper's estimates of the 37 windowed sets
 └── docs/PARAMETERS.md           # what every parameter does and how it was chosen
 ```

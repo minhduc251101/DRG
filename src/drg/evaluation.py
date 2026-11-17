@@ -93,3 +93,31 @@ def relative_pose_line(stamp_target: float, stamp_source: float, T: np.ndarray) 
     """One line of relative_poses.txt: both stamps, then the 12 entries of the top 3x4 of T."""
     values = " ".join(f"{v:.12g}" for v in T[:3, :].ravel())
     return f"{stamp_target:.9f} {stamp_source:.9f} {values}\n"
+
+
+def read_relative_poses(path: str) -> list:
+    """relative_poses.txt -> chains of consecutive pairs, each a list of (stamp_target, stamp_source, T).
+
+    A new chain starts wherever a pair does not continue the previous one, i.e. where a pair is
+    missing (a frame without ground truth in the released estimates).
+    """
+    chains = []
+    for row in np.loadtxt(path, ndmin=2):
+        T = np.vstack([row[2:14].reshape(3, 4), [0, 0, 0, 1]])
+        if not chains or chains[-1][-1][1] != row[0]:
+            chains.append([])
+        chains[-1].append((row[0], row[1], T))
+    return chains
+
+
+def chain_stamps(chain) -> list:
+    """Frame stamps of a chain: the first target, then every source."""
+    return [chain[0][0]] + [stamp_source for _, stamp_source, _ in chain]
+
+
+def chain_poses(chain, start: Optional[np.ndarray] = None) -> list:
+    """Chained poses of a chain, P_{k+1} = P_k T_k, from `start` (identity by default)."""
+    poses = [np.eye(4) if start is None else start]
+    for _, _, T in chain:
+        poses.append(poses[-1] @ T)
+    return poses
