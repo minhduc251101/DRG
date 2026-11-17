@@ -259,7 +259,7 @@ so evo runs on them directly:
 evo_ape tum results/trajectories/loop3/stamp_gt_traj.txt results/trajectories/loop3/stamp_est_traj.txt -va --plot
 ```
 
-## Reproducing the paper
+## Reproducing the paper result
 
 There are three levels, from fastest to most complete.
 
