@@ -76,7 +76,8 @@ APDGICP gives the same accuracy.
 <p align="center"><em>Chained per-pair estimates (no keyframes, smoothing or loop closure) on the four longest sequences (paper, Fig. 4). Each segment starts at the ground-truth pose of its first scan.</em></p>
 
 All numbers above can be recomputed from the released estimates in seconds; see
-[Reproducing the paper result](#reproducing-the-paper-result). A plot of every sequence is in
+[Reproducing the paper result](#reproducing-the-paper-result). A plot of every sequence over the
+whole run, never restarted at the ground truth and with its ATE, is in
 [`results/trajectories/<sequence>/trajectory.pdf`](results/README.md#odometry-trajectories).
 
 **Supplementary, not in the paper:** [`results/slam_backend/`](results/slam_backend/README.md) runs
@@ -258,12 +259,12 @@ transform is composed.
 
 **The paper's trajectories.** [`results/trajectories/<sequence>/`](results/README.md#odometry-trajectories)
 holds DRG's trajectory, the ground truth at the same stamps and a plot (`trajectory.pdf`) for all
-six sequences of the paper. As in Fig. 4, each segment starts at the ground-truth pose of its first
-scan:
+six sequences of the paper. The trajectory chains the paper's per-pair estimates over the whole run
+from the ground-truth pose of the first scan and is never restarted, like the node's own output:
 
 ```bash
 cd results/trajectories
-evo_traj tum loop3/stamp_est_traj.txt --ref loop3/stamp_gt_traj.txt --plot --plot_mode xy
+evo_ape tum loop3/stamp_gt_traj.txt loop3/stamp_est_traj.txt -va --plot --plot_mode xy
 ```
 
 ## Reproducing the paper result
@@ -282,7 +283,9 @@ python3 scripts/evaluate_trajectory.py --est results/relative_poses/loop3.txt --
 
 `results/trajectories/` holds the same estimates chained into trajectories for evo, with the
 ground truth at the same stamps; `scripts/export_trajectories.py` rebuilds them and
-`scripts/plot_trajectories.py` their plots ([results/README.md](results/README.md#odometry-trajectories)).
+`scripts/plot_trajectories.py` their plots, and with `--segmented` both also rebuild the version of
+Fig. 4, restarted at the ground truth after each missing pair
+([results/README.md](results/README.md#odometry-trajectories)).
 
 **(b) Re-run DRG on the paper's input.** The paper registers the per-scan clouds that 4DRadarSLAM
 (Go-RIO version) writes with its `/radar_graph_slam/dump` service (one folder per scan, with

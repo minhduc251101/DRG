@@ -1,4 +1,4 @@
-# DRG on NTU4DRadLM garden: chained scan-to-scan estimates, 1 chain(s), each starting at the ground-truth pose of its first scan
+# DRG on NTU4DRadLM garden: per-pair estimates chained over the whole run from the ground-truth pose of the first scan, never restarted; 0 missing pair(s) bridged at constant velocity
 # timestamp tx ty tz qx qy qz qw
 1652439949.901997805 64.763390891 64.595885216 0.802546887 0.018246561 0.009700223 0.753086584 0.657596811
 1652439950.966448784 64.677044186 65.136556555 0.786225596 0.018537809 0.010123369 0.761942250 0.647300452
