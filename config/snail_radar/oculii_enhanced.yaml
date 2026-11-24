@@ -1,0 +1,5 @@
+# DRG on the Oculii Eagle accumulative cloud of SNAIL-Radar (results/snail_radar/*/oculii_enhanced): one RANSAC
+# trial instead of 40, to save time on these dense scans. Re-running 20 pairs of each of the five
+# sequences with 40 trials changed no estimate by more than 4.7e-10. Everything else is the paper's.
+drg:
+  ransac_trials: 1

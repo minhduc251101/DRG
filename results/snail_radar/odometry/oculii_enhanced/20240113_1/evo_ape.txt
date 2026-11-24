@@ -1,0 +1,39 @@
+$ evo_ape tum stamp_gt_traj.txt stamp_est_traj.txt -va --save_results evo_ape.zip --save_plot evo_ape.pdf --plot_mode xy
+--------------------------------------------------------------------------------
+Loaded 2316 stamps and poses from: stamp_gt_traj.txt
+Loaded 2326 stamps and poses from: stamp_est_traj.txt
+--------------------------------------------------------------------------------
+Synchronizing trajectories...
+Found 2316 of max. 2316 possible matching timestamps between...
+	stamp_gt_traj.txt
+and:	stamp_est_traj.txt
+..with max. time diff.: 0.01 (s) and time offset: 0.0 (s).
+--------------------------------------------------------------------------------
+Aligning using Umeyama's method...
+Rotation of alignment:
+[[-0.98970984  0.13885404  0.03455424]
+ [-0.14123161 -0.98673439 -0.08005547]
+ [ 0.02297983 -0.08411184  0.99619131]]
+Translation of alignment:
+[2.45834083e+05 3.38041057e+06 2.85915918e+01]
+Scale correction: 1.0
+--------------------------------------------------------------------------------
+Compared 2316 absolute pose pairs.
+Calculating APE for translation part pose relation...
+--------------------------------------------------------------------------------
+APE w.r.t. translation part (m)
+(with SE(3) Umeyama alignment)
+
+       max	82.338305
+      mean	44.633163
+    median	39.148937
+       min	10.525641
+      rmse	48.754999
+       sse	5505247.666647
+       std	19.619650
+
+--------------------------------------------------------------------------------
+Plotting results... 
+Plots saved to evo_ape.pdf
+--------------------------------------------------------------------------------
+Saving results to evo_ape.zip...

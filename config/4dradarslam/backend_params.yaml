@@ -1,0 +1,104 @@
+# 4DRadarSLAM (Go-RIO version) configuration of every run in results/slam_backend (all six sequences):
+# the parameters of the two nodelets that remain when DRG replaces the scan-matching front end.
+# Read from the launch files the runs used; identical for all sequences except dataset_name, which only
+# names a ground-truth file that is never loaded (gt_file_location is NOT set; never set it).
+# enable_loop_closure is set per run on the roslaunch command line: false (no loop closure) / true.
+# The runner also set the loop detector's ellipse to the library defaults on the master:
+#   /radar_graph_slam_nodelet/odometry_drift_xy 0.05, /radar_graph_slam_nodelet/odometry_drift_scale_xy 2.0
+# scripts/slam/check_launch.py compares a launch file with this list. Values as in the launch files.
+radar_preprocessing_nodelet:
+  bilateral_sigma_r: 0.03
+  bilateral_sigma_s: 5
+  distance_far_thresh: 200.0
+  distance_near_thresh: 1
+  downsample_method: "VOXELGRID"
+  downsample_resolution: 0.1
+  enable_dynamic_object_removal: false
+  outlier_removal_method: "RADIUS"
+  power_threshold: 0.0
+  radius_min_neighbors: 5
+  radius_radius: 2
+  statistical_mean_k: 30
+  statistical_stddev: 1.2
+  use_distance_filter: true
+  z_high_thresh: 100.0
+  z_low_thresh: -5.0
+radar_graph_slam_nodelet:
+  accum_distance_thresh: 50.0
+  barometer_edge_robust_kernel: "Huber"
+  barometer_edge_robust_kernel_size: 1.0
+  barometer_edge_stddev: 0.47
+  barometer_edge_type: 1
+  const_stddev_q: 0.1
+  const_stddev_x: 0.5
+  distance_from_last_edge_thresh: 10
+  distance_thresh: 10.0
+  enable_barometer: false
+  enable_gps: false
+  enable_loop_closure: false
+  enable_loop_verification: true
+  enable_odom_check: true
+  enable_pf: true
+  enable_preintegration: true
+  fix_first_node: true
+  fix_first_node_adaptive: true
+  fix_first_node_stddev: "10 10 10 1 1 1"
+  g2o_solver_num_iterations: 512
+  g2o_solver_type: "lm_var_csparse"
+  gps_edge_intervals: 15
+  gps_edge_robust_kernel: "Huber"
+  gps_edge_robust_kernel_size: 1.0
+  gps_edge_stddev_xy: 5.0
+  gps_edge_stddev_z: 5.0
+  graph_update_interval: 2.0
+  historyKeyframeFitnessScore: 6
+  keyframe_delta_angle: 0.1745
+  keyframe_delta_trans: 0.5
+  keyframe_min_size: 500
+  loop_closure_edge_robust_kernel: "Huber"
+  loop_closure_edge_robust_kernel_size: 1.0
+  map_cloud_resolution: 0.05
+  map_cloud_update_interval: 6.0
+  max_allowed_drift_ratio: 0.1
+  max_baro_difference: 2.0
+  max_gps_edge_stddev_xy: 1.5
+  max_gps_edge_stddev_z: 3.0
+  max_keyframes_per_update: 1000
+  max_stddev_q: 0.2
+  max_stddev_x: 5.0
+  max_yaw_difference: 20
+  min_loop_interval_dist: 10.0
+  min_stddev_q: 0.05
+  min_stddev_x: 0.1
+  odom_check_rot_thresh: 0.05
+  odom_check_trans_thresh: 0.3
+  odometry_edge_robust_kernel: "NONE"
+  odometry_edge_robust_kernel_size: 1.0
+  pairwise_check_rot_thresh: 0.2
+  pairwise_check_trans_thresh: 1.5
+  preinteg_orient_stddev_pitch: 100
+  preinteg_orient_stddev_roll: 10000
+  preinteg_orient_stddev_yaw: 200
+  preinteg_trans_stddev_x: 100
+  preinteg_trans_stddev_y: 100
+  preinteg_trans_stddev_z: 10
+  reg_correspondence_randomness: 20
+  reg_max_correspondence_distance: 2.0
+  reg_max_optimizer_iterations: 20
+  reg_maximum_iterations: 64
+  reg_nn_search_method: "DIRECT7"
+  reg_num_threads: 0
+  reg_resolution: 1.0
+  reg_transformation_epsilon: 0.1
+  reg_use_reciprocal_correspondences: false
+  registration_method: "FAST_APDGICP"
+  sc_azimuth_range: 56.5
+  sc_dist_thresh: 0.5
+  show_sphere: false
+  structure_check_min_dist: 1.0
+  structure_check_violation_ratio: 0.05
+  use_const_inf_matrix: false
+  use_egovel_preinteg_trans: true
+  var_gain_a: 20.0
+  verify_chi2_thresh: 5000.0
+  verify_graph_size: 20

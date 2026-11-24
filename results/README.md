@@ -11,6 +11,8 @@ sequences, then scoring the output against the ground truth with
   trajectory DRG outputs, with the ground truth, `evo_ape -va` results and plots
 * [`slam_backend/`](slam_backend/README.md): **not in the paper.** DRG as the front end of the full
   4DRadarSLAM system, run with loop closure off and on, with `evo_ape -va` results
+* [`snail_radar/`](snail_radar/README.md): **not in the paper.** The same code on five SNAIL-Radar sequences
+  (Oculii Eagle and Continental ARS548): odometry, and 4DRadarSLAM on the ARS548, with `evo_ape -va` results
 
 ## Per-pair estimates
 
@@ -55,11 +57,11 @@ paper's 1 s keyframes. It is the odometry of the garden SLAM run.
 
 | file | content |
 |---|---|
-| `stamp_est_traj.txt` | DRG odometry: the estimates of `relative_poses/` chained over the whole run, P<sub>k+1</sub> = P<sub>k</sub> T<sub>k</sub>, from the identity. No ground truth, restart, bridging, keyframing, smoothing or loop closure: the trajectory DRG itself outputs |
+| `stamp_est_traj.txt` | DRG odometry: the estimates of `relative_poses/` chained over the whole run, P<sub>k+1</sub> = P<sub>k</sub> T<sub>k</sub>, from the identity. No ground truth, bridging, keyframing, smoothing or loop closure: the trajectory DRG itself outputs |
 | `stamp_gt_traj.txt` | NTU4DRadLM ground truth interpolated at the same radar stamps (linear in position, SLERP in rotation, as in the paper). Stamps with no ground-truth sample within the gap limit are left out, and evo skips them |
 | `evo_ape.txt`, `evo_ape.zip`, `evo_ape.pdf` | output of `evo_ape tum stamp_gt_traj.txt stamp_est_traj.txt -va --save_results evo_ape.zip --save_plot evo_ape.pdf --plot_mode xy`: the printed statistics, the saved results (error per pose, statistics, alignment) and evo's plots |
 | `trajectory.pdf` | top view, the estimate SE(3)-aligned to the ground truth as by `evo_ape -va`, with its ATE |
-| `stamp_est_traj_segmented.txt`, `evo_ape_segmented.*`, `trajectory_segmented.pdf` | the version drawn in **Fig. 4 of the paper**: only the pairs the paper scored, the chain cut at the other pairs and every segment **restarted at the ground-truth pose** of its first scan. It is not a trajectory DRG outputs |
+| `stamp_est_traj_segmented.txt`, `evo_ape_segmented.*`, `trajectory_segmented.pdf` | the segmented version drawn in Fig. 4 of the paper: the chain is restarted after each gap in the ground truth, as in the paper |
 
 ATE (absolute trajectory error) is the RMSE of `evo_ape -va`, SE(3) Umeyama alignment, over every
 pose with ground truth:
@@ -77,10 +79,17 @@ pose with ground truth:
 The paper reports no ATE. It scores the chained odometry by *t*_rel and *r*_rel (Table 3), which
 `scripts/evaluate_trajectory.py` computes from `relative_poses/`.
 
-**Why loop1 and loop2 look so much better in Fig. 4 of the paper.** Fig. 4 restarts the chain at the
-ground truth after every pair without ground truth, 21 times on loop1 and 9 times on loop2 (loop3: 5, cp: 2). Each restart deletes the
-drift accumulated until then, so Fig. 4 shows the drift *within* each segment only. A real run is
-never restarted:
+**Fig. 4 and the whole-run trajectory.** As in the paper, a scan pair is scored only if both of its scans
+lie within 0.1 s of a ground-truth sample (0.15 s on nyl). The ground truth is sampled at 10 Hz, but it has
+short gaps of up to 0.38 s, and a scan near the middle of such a gap can be more than 0.1 s from the
+nearest sample. This happens at 21 places on loop1, 9 on loop2 and 5 on loop3, and never on nyl and garden. On cp
+the scored pairs are interrupted at the 2 scans without a point cloud (frames 3247 and 3312). The segmented
+trajectory of Fig. 4 restarts the chain at each of these places, so each segment shows only the drift
+accumulated within it. The whole-run trajectory is a single chain from the first scan to the last (on cp,
+across the two missing scans), so the drift of all segments adds up. As the paper notes, over long chains
+the absolute trajectory error mainly reflects where the heading error accumulates; the paper therefore
+scores the chained estimates by the KITTI relative errors (Table 3). On loop1 and loop2, two effects
+dominate the whole-run error:
 
 * **loop1.** In the raw rosbag `loop1_2022-06-03_1.bag`, `/radar_enhanced_pcl` has no message for
   17.4 s (stamps 1654229729.355 to 1654229746.745) while the IMU keeps publishing. In that time the
@@ -90,15 +99,14 @@ never restarted:
   small per-pair heading errors add to it: at the end of the run the heading is off by
   78° (maximum 82°). The ATE is 538.7 m. As a
   diagnostic only, replacing that one pair by its ground-truth motion gives
-  178.9 m. Fig. 4 restarts the chain at the ground truth
-  13 s after the radar comes back (30 s after
-  the dropout began), so the heading error is gone from the figure (20.7 m for its version).
+  178.9 m. In Fig. 4 the chain is
+  restarted 13 s after the radar comes back (30 s after
+  the dropout began), so that heading error stays within one segment (20.7 m for that version).
 * **loop2.** No dropout while moving: the longest gap between scans (22.6 s) is a stop, the
   ground truth moves 0.01 m across it. The per-pair heading errors
   accumulate over the 4.8 km to 32° at the end of the run
-  (maximum 35°), which gives an ATE of 121.9 m. The
-  9 restarts of Fig. 4 reset that heading each time
-  (52.9 m for its version).
+  (maximum 35°), which gives an ATE of 121.9 m. In Fig. 4
+  it is spread over 10 segments (52.9 m for that version).
 * For comparison, loop3 ends within 0.6° of the ground-truth heading
   (maximum 6°): ATE 58.4 m over
   4.2 km.
@@ -106,7 +114,7 @@ never restarted:
 In the full SLAM system, loop closure corrects loop2 in these runs but cannot help loop1, which never
 returns to a place it has passed; see [`slam_backend/`](slam_backend/README.md).
 
-<p align="center"><img src="../docs/figures/loop1_loop2_paper_vs_real.png" width="820"></p>
+<p align="center"><img src="../docs/figures/loop1_loop2_segments_vs_whole_run.png" width="820"></p>
 
 For per-pair errors use `scripts/evaluate_pairs.py`: `evo_rpe` with `--delta 1 --delta_unit f` on
 these files is close, but also scores the pairs the paper leaves out.

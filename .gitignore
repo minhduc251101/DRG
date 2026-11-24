@@ -225,3 +225,4 @@ results/*/
 !results/relative_poses/
 !results/trajectories/
 !results/slam_backend/
+!results/snail_radar/

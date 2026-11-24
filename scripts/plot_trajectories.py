@@ -5,7 +5,7 @@
 
 writes, for every sequence,
 
-    results/trajectories/<seq>/trajectory.pdf   DRG odometry over the whole run, never restarted
+    results/trajectories/<seq>/trajectory.pdf   DRG odometry over the whole run (one chain)
                                                 (stamp_est_traj.txt), SE(3)-aligned to the ground truth
                                                 as by `evo_ape -va`, with its ATE RMSE in the legend.
     results/slam_backend/<seq>/trajectory.pdf   DRG front end, and 4DRadarSLAM's back end on it without
@@ -15,15 +15,15 @@ writes, for every sequence,
 and with --segmented (after `export_trajectories.py --segmented`)
 
     results/trajectories/<seq>/trajectory_segmented.pdf
-                                                as in Fig. 4 of the paper: each segment starts at the
-                                                ground-truth pose of its first scan and is drawn on its own.
+                                                as in Fig. 4 of the paper: the segmented chain, restarted
+                                                after each gap in the ground truth, each segment drawn on its own.
 
 and with --overview the two figures of the README:
 
-    docs/figures/trajectories_real.png          nyl, loop1, loop2, loop3: DRG odometry and 4DRadarSLAM on
+    docs/figures/trajectories_whole_run.png     nyl, loop1, loop2, loop3: DRG odometry and 4DRadarSLAM on
                                                 it without / with loop closure, each aligned as by evo_ape -va
-    docs/figures/loop1_loop2_paper_vs_real.png  loop1 and loop2 as drawn in Fig. 4 of the paper (restarted
-                                                at the ground truth) and as DRG really runs (never restarted)
+    docs/figures/loop1_loop2_segments_vs_whole_run.png  loop1 and loop2 as in Fig. 4 of the paper (drift per
+                                                segment) and over the whole run (one chain)
 
 Every plot marks each radar dropout: two consecutive scans more than DROPOUT_MIN_S apart while the
 ground truth moves more than DROPOUT_MIN_M (loop1: 17.4 s and 90 m, with a 43 deg turn).
@@ -97,7 +97,7 @@ def odometry_figure(seq):
     folder = os.path.join(ODOMETRY_DIR, seq)
     gt = read_tum(os.path.join(folder, "stamp_gt_traj.txt"))
     est, rmse = aligned_with_ate(gt, read_tum(os.path.join(folder, "stamp_est_traj.txt")))
-    fig, ax = new_axis(f"{seq}: DRG odometry over the whole run, never restarted")
+    fig, ax = new_axis(f"{seq}: DRG odometry over the whole run")
     plot.traj(ax, XY, gt, "--", "gray", "ground truth")
     plot.traj(ax, XY, est, "-", DRG_COLOR, f"DRG odometry (ATE {rmse:.1f} m)")
     mark_dropouts(ax, gt)
@@ -122,11 +122,11 @@ def segmented_figure(seq):
 
     xyz = est.positions_xyz
     fig, ax = new_axis(f"{seq}: Fig. 4 of the paper, {len(starts) - 1} segment{'s' if len(starts) > 2 else ''} "
-                       "restarted at the ground truth")
+                       "(drift per segment)")
     plot.traj(ax, XY, gt, "--", "gray", "ground truth")
     for k, (a, b) in enumerate(zip(starts[:-1], starts[1:])):
         segment = PoseTrajectory3D(poses_se3=est.poses_se3[a:b], timestamps=est.timestamps[a:b])
-        plot.traj(ax, XY, segment, "-", DRG_COLOR, "DRG, restarted at the ground truth" if k == 0 else "")
+        plot.traj(ax, XY, segment, "-", DRG_COLOR, "DRG, per segment" if k == 0 else "")
         ax.plot(xyz[a, 0], xyz[a, 1], "o", color=DRG_COLOR, ms=3)
     mark_dropouts(ax, gt)
     return fig
@@ -138,6 +138,13 @@ def slam_ground_truth(folder, estimate_name, default):
     return read_tum(path) if os.path.exists(path) else default
 
 
+def loop_closure_label(folder, label):
+    """'<label> (best of N)' when the folder holds the best of several loop-closure runs (the others in repeats/)."""
+    rep = os.path.join(folder, "repeats")
+    n = 1 + (len([d for d in os.listdir(rep) if d.startswith("run")]) if os.path.isdir(rep) else 0)
+    return f"{label} (best of {n})" if n > 1 else label
+
+
 def slam_figure(seq):
     folder = os.path.join(SLAM_DIR, seq)
     gt = read_tum(os.path.join(folder, "stamp_gt_traj.txt"))
@@ -145,7 +152,8 @@ def slam_figure(seq):
     plot.traj(ax, XY, gt, "--", "gray", "ground truth")
     for name, label, color in (("stamp_est_traj_front_end.txt", "DRG odometry", FRONT_END_COLOR),
                                ("stamp_est_traj_no_loop_closure.txt", "+ back end, no loop closure", NO_LOOP_COLOR),
-                               ("stamp_est_traj_loop_closure.txt", "+ back end, loop closure", DRG_COLOR)):
+                               ("stamp_est_traj_loop_closure.txt", loop_closure_label(folder, "+ back end, loop closure"),
+                                DRG_COLOR)):
         est, rmse = aligned_with_ate(slam_ground_truth(folder, name, gt), read_tum(os.path.join(folder, name)))
         plot.traj(ax, XY, est, "-", color, f"{label} (ATE {rmse:.1f} m)")
     mark_dropouts(ax, gt)
@@ -160,7 +168,8 @@ def panel_slam(ax, seq):
     ax.plot(xyz[:, 0], xyz[:, 1], "--", color="gray", lw=1.2, label="ground truth")
     for name, label, color in (("stamp_est_traj_front_end.txt", "DRG odometry", FRONT_END_COLOR),
                                ("stamp_est_traj_no_loop_closure.txt", "+ back end", NO_LOOP_COLOR),
-                               ("stamp_est_traj_loop_closure.txt", "+ back end + loop closure", DRG_COLOR)):
+                               ("stamp_est_traj_loop_closure.txt", loop_closure_label(folder, "+ back end + loop closure"),
+                                DRG_COLOR)):
         est, rmse = aligned_with_ate(slam_ground_truth(folder, name, gt), read_tum(os.path.join(folder, name)))
         e = est.positions_xyz
         ax.plot(e[:, 0], e[:, 1], "-", color=color, lw=1.1, label=f"{label}: {rmse:.1f} m")
@@ -177,7 +186,7 @@ def overview_real():
     for ax, seq in zip(axes, ("nyl", "loop1", "loop2", "loop3")):
         panel_slam(ax, seq)
     axes[0].set_ylabel("y (m)", fontsize=8)
-    fig.suptitle("Real trajectories, never restarted at the ground truth: DRG odometry and 4DRadarSLAM on it "
+    fig.suptitle("Whole-run trajectories: DRG odometry and 4DRadarSLAM on it "
                  "(keyframes)", fontsize=10)
     fig.tight_layout()
     return fig
@@ -202,14 +211,14 @@ def overview_paper_vs_real():
             ax.plot(p[a:b, 0], p[a:b, 1], "-", color=DRG_COLOR, lw=1.1,
                     label=f"DRG, {len(starts) - 1} segments (APE {rmse_seg:.1f} m)" if k == 0 else None)
             ax.plot(p[a, 0], p[a, 1], "o", color="black", ms=3,
-                    label=f"restart at the ground truth ({len(starts) - 2}x)" if k == 1 else None)
-        ax.set_title(f"{seq}: as in Fig. 4 of the paper (restarted at the ground truth)", fontsize=9)
+                    label=f"restart ({len(starts) - 2}x)" if k == 1 else None)
+        ax.set_title(f"{seq}: Fig. 4 of the paper, drift per segment", fontsize=9)
 
         ax = axes[1, col]
         ax.plot(g[:, 0], g[:, 1], "--", color="gray", lw=1.2, label="ground truth")
         e = est.positions_xyz
         ax.plot(e[:, 0], e[:, 1], "-", color=DRG_COLOR, lw=1.1, label=f"DRG odometry (ATE {rmse:.1f} m)")
-        ax.set_title(f"{seq}: real run, never restarted (evo_ape -va)", fontsize=9)
+        ax.set_title(f"{seq}: whole run, one chain (evo_ape -va)", fontsize=9)
         for ax in axes[:, col]:
             mark_dropouts(ax, gt)
             ax.set_aspect("equal", adjustable="datalim")
@@ -226,8 +235,8 @@ def main():
     ap.add_argument("--overview", action="store_true", help="also write the two README figures in docs/figures")
     args = ap.parse_args()
     if args.overview:
-        for figure, name in ((overview_real, "trajectories_real.png"),
-                             (overview_paper_vs_real, "loop1_loop2_paper_vs_real.png")):
+        for figure, name in ((overview_real, "trajectories_whole_run.png"),
+                             (overview_paper_vs_real, "loop1_loop2_segments_vs_whole_run.png")):
             path = os.path.join(REPO, "docs", "figures", name)
             fig = figure()
             fig.savefig(path, dpi=130, bbox_inches="tight")

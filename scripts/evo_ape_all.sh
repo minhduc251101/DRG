@@ -30,4 +30,7 @@ done
     [ -f "slam_backend/$seq/stamp_gt_traj_$est.txt" ] && gt="stamp_gt_traj_$est.txt"
     run "slam_backend/$seq" "$gt" "stamp_est_traj_$est.txt" "evo_ape_$est"
   done
+  for rep in slam_backend/$seq/repeats/run*/; do      # the other runs with loop closure (loop2, loop3)
+    [ -f "${rep}stamp_est_traj_loop_closure.txt" ] && run "${rep%/}" stamp_gt_traj.txt stamp_est_traj_loop_closure.txt evo_ape_loop_closure
+  done
 done

@@ -19,7 +19,7 @@
   Tiancheng Li, Zhenzi Li, Alen Alempijevic, Shoudong Huang, Australasian Conference on Robotics and
   Automation (ACRA), 2026.
 - **Tutorial**: 📂 [`example/example.ipynb`](example/example.ipynb), the six stages on real radar data. It needs no ROS and no dataset download.
-- **Released results**: 📂 [`results/`](results/README.md), all from a rerun of this code: DRG's estimate for every consecutive scan pair of the six sequences (the paper's Tables 1 and 3 are recomputed from them), the real trajectories against the ground truth with their `evo_ape -va` results and plots, and the same odometry in the full 4DRadarSLAM system with and without loop closure.
+- **Released results**: 📂 [`results/`](results/README.md), all from a rerun of this code: DRG's estimate for every consecutive scan pair of the six sequences (the paper's Tables 1 and 3 are recomputed from them), the whole-run trajectories with their `evo_ape -va` results and plots, and the same odometry in the full 4DRadarSLAM system with and without loop closure. Not in the paper: the same code on SNAIL-Radar ([`results/snail_radar/`](results/snail_radar/README.md)).
 
 <p align="center">
   <img src="docs/figures/drg_loop3.gif" alt="DRG on NTU4DRadLM loop3" width="640"/>
@@ -86,12 +86,12 @@ registration.** At 12 Hz the fused translation is 93 % Doppler, and the same fus
 APDGICP gives the same accuracy.
 
 <p align="center"><img src="docs/figures/trajectories.png" width="900"></p>
-<p align="center"><em>Fig. 4 of the paper: chained per-pair estimates on the four longest sequences, without keyframes, smoothing or loop closure. As in the paper, each segment starts at the ground-truth pose of its first scan (nyl: 1 segment, loop1: 22, loop2: 10, loop3: 6), so the figure shows the drift within the segments. Rerunning this code reproduces DRG's segments exactly (<code>results/trajectories/&lt;sequence&gt;/stamp_est_traj_segmented.txt</code>).</em></p>
+<p align="center"><em>Fig. 4 of the paper. Chained scan-to-scan estimates of every method on the longest handcart sequence (nyl) and the three vehicle sequences, with no keyframing, smoothing or loop closure. The chain is restarted where a scan falls in a short gap of the ground truth (loop1: 21 times, loop2: 9, loop3: 5, nyl: never), so the drift inside a segment is front-end drift alone. Methods that diverge leave the panel. Rerunning this repository reproduces the DRG segments exactly (<code>results/trajectories/&lt;sequence&gt;/stamp_est_traj_segmented.txt</code>).</em></p>
 
 ### Trajectory error, with and without loop closure (not in the paper)
 
-The paper reports no absolute trajectory error. Here are DRG's real trajectories, never restarted at
-the ground truth, alone and as the front end of the full
+The paper reports no absolute trajectory error. Here are DRG's whole-run trajectories, each a single chain
+that is never restarted, alone and as the front end of the full
 [4DRadarSLAM](https://github.com/zhuge2333/4DRadarSLAM) system run from the rosbags with loop closure
 off and on. ATE is the RMSE [m] of `evo_ape tum <ground truth> <estimate> -va` (SE(3) Umeyama
 alignment). The saved results (`--save_results`) and plots (`--save_plot`) of every cell are in
@@ -99,25 +99,38 @@ alignment). The saved results (`--save_results`) and plots (`--save_plot`) of ev
 
 | ATE [m], `evo_ape -va` | cp | garden | nyl | loop1 | loop2 | loop3 |
 |---|---|---|---|---|---|---|
-| ground-truth path | 240 m | 332 m | 1,009 m | 6,944 m | 4,793 m | 4,233 m |
+| ground-truth path (every scan) | 240 m | 332 m | 1,009 m | 6,944 m | 4,793 m | 4,233 m |
 | DRG odometry, every scan | 1.61 | 3.15 | 9.66 | 538.74 | 121.86 | 58.38 |
 | DRG odometry, at the SLAM keyframes | 1.57 | 3.15 | 9.40 | 536.44 | 120.01 | 56.85 |
 | + 4DRadarSLAM back end, no loop closure | 1.66 | 7.09 | 9.35 | 535.14 | 111.72 | 55.41 |
-| + 4DRadarSLAM back end, loop closure | 0.51 | 6.30 | 7.50 | 535.15 | 14.09 | 11.98 |
-| loop closures | 1 | 1 | 0 | 0 | 47 | 55 |
+| + 4DRadarSLAM back end, loop closure (best run) | 0.51 | 6.30 | 7.50 | 535.15 | 14.09 | 11.85 |
+| loop closures (best run) | 1 | 1 | 0 | 0 | 47 | 55 |
+| loop-closure runs (median ATE [m]) | 1 (0.51) | 1 (6.30) | 1 (7.50) | 1 (535.15) | 3 (57.26) | 7 (20.52) |
 
-With loop closure the result varies from run to run, because 4DRadarSLAM's back end is not deterministic: three runs of the same input gave 11.98, 21.23, 21.63 m on loop3 and 14.09, 57.26, 101.11 m on loop2 (the table shows the first run). nyl closes no loop in either run (0 loop closures), so the difference between its two back-end rows is this run-to-run variation too. garden: the whole garden run, every scan (the paper's 1 s keyframes cover 142 m of it: ATE 1.02 m). The two odometry rows differ only in where they are scored, at every scan or at the SLAM keyframes. The back end without loop closure still optimises a pose graph with IMU and ego-velocity preintegration edges.
+With loop closure the result varies from run to run, because 4DRadarSLAM's back end is not deterministic. The table shows the best run (lowest ATE); its files are in `results/slam_backend/<seq>/` and every other run is in `repeats/`. loop3, 7 runs: 11.98, 21.23, 21.63, 20.52, 11.88, 11.85, 21.45 m (median 20.52 m); loop2, 3 runs: 14.09, 57.26, 101.11 m (median 57.26 m). A rerun lands somewhere in this range, not necessarily on the best run. nyl closes no loop in either run (0 loop closures), so the difference between its two back-end rows is this run-to-run variation too. garden: the whole garden run, every scan (the paper's 1 s keyframes cover 142 m of it: ATE 1.02 m). The two odometry rows differ only in where they are scored, at every scan or at the SLAM keyframes. The back end without loop closure still optimises a pose graph with IMU and ego-velocity preintegration edges.
 
-<p align="center"><img src="docs/figures/trajectories_real.png" width="900"></p>
+<p align="center"><img src="docs/figures/trajectories_whole_run.png" width="900"></p>
 
-**Why loop1 and loop2 look so much better in Fig. 4 of the paper (above).** Fig. 4 draws the chained estimates restarted at the ground-truth pose after every pair without ground truth: 21 times on loop1 and 9 times on loop2. Each restart deletes the drift accumulated until then (APE 20.7 m and 52.9 m for these versions). A real run is never restarted:
+**Fig. 4 and the whole-run trajectories.** As in the paper, a scan pair is scored only if both of its scans lie within 0.1 s of a ground-truth sample. The ground truth is sampled at 10 Hz, but it has short gaps of up to 0.38 s, and a scan near the middle of such a gap can be more than 0.1 s from the nearest sample. This happens at 21 places on loop1, 9 on loop2 and 5 on loop3. Fig. 4 restarts the chained trajectory at each of these places, so each segment shows only the drift accumulated within it (`evo_ape -va` of the segmented trajectories: 20.7 m on loop1, 52.9 m on loop2). The whole-run trajectory is a single chain from the first scan to the last, so the drift of all segments adds up. As the paper notes, over long chains the absolute trajectory error mainly reflects where the heading error accumulates; the paper therefore scores the chained estimates by the KITTI relative errors (Table 3). On loop1 and loop2, two effects dominate the whole-run error:
 
-* **loop1.** The rosbag has a 17.4 s radar dropout in which the car drives 90 m and turns 43°. DRG, like any scan-to-scan method, estimates 0.46 m and 0° for that pair, so the heading is wrong from there on. loop1 never returns to a place it has passed, so no loop closure can correct it (0 loop closures), and 4DRadarSLAM's pose graph follows the odometry rather than the IMU.
-* **loop2.** There is no dropout, but the per-pair heading errors add up to 35° over 4.8 km. Here the full SLAM system helps: 47 loop closures bring the ATE to 14.1 m (14.1, 57.3, 101.1 m in three runs). The result hinges on whether the loop verification accepts the first revisit, which it did in 2 of these 3 runs; with the odometry used before this rerun it was rejected and no loop closed.
+* **loop1.** The rosbag has a 17.4 s radar dropout in which the car drives 90 m and turns 43°. DRG, like any scan-to-scan method, estimates 0.46 m and 0° for that pair, and the resulting heading error persists for the rest of the run. loop1 never returns to a place it has passed, so no loop closure can correct it (0 loop closures), and 4DRadarSLAM's pose graph follows the odometry rather than the IMU.
+* **loop2.** There is no dropout, but the per-pair heading errors add up to 35° over 4.8 km. With loop closure, 4DRadarSLAM corrects most of it: 47 loop closures bring the ATE to 14.1 m (14.1, 57.3, 101.1 m in three runs). The result hinges on whether the loop verification accepts the first revisit. It did in 2 of these 3 runs; in the remaining run it rejected that revisit and accepted one false loop instead (304 m apart in the ground truth). With the odometry used before this rerun it was rejected and no loop closed.
 
 Details: [results/README.md](results/README.md#odometry-trajectories) and [results/slam_backend/README.md](results/slam_backend/README.md).
 
-<p align="center"><img src="docs/figures/loop1_loop2_paper_vs_real.png" width="820"></p>
+<p align="center"><img src="docs/figures/loop1_loop2_segments_vs_whole_run.png" width="820"></p>
+
+### SNAIL-Radar (not in the paper)
+
+The same code, unchanged and with the paper's parameters, on five sequences of [SNAIL-Radar](https://snail-radar.github.io) with two radars: radar-only scan-to-scan odometry over the whole run, ATE [m] of `evo_ape -va`:
+
+| | 20240113_1 | 20240113_3 | 20240115_2 | 20240123_2 | 20240123_3 |
+|---|---|---|---|---|---|
+| ground-truth path | 541 m | 4,609 m | 6,627 m | 8,525 m | 2,228 m |
+| Oculii Eagle, accumulative cloud | 48.75 | 79.66 | 71.90 | 197.87 | 45.76 |
+| Continental ARS548 (Soft-REVE, as in the paper) | 5.02 | 369.52 | 805.51 | 183.99 | 121.42 |
+
+Other inputs, 4DRadarSLAM on the ARS548 without and with loop closure, and why the ground truth is not included: [results/snail_radar/README.md](results/snail_radar/README.md).
 
 ## 🍎 Tutorial (Python)
 
@@ -294,7 +307,7 @@ transform is composed.
 
 **The released trajectories.** [`results/trajectories/<sequence>/`](results/README.md#odometry-trajectories)
 holds DRG's trajectory over the whole run (the estimates of every consecutive pair, chained from the
-identity and never restarted, like the node's own output), the ground truth at the same stamps, a plot,
+identity without restarting, like the node's own output), the ground truth at the same stamps, a plot,
 and the output of `evo_ape -va` with its saved results and plots (`evo_ape.txt`, `.zip`, `.pdf`):
 
 ```bash
@@ -379,13 +392,15 @@ python3 scripts/evaluate_trajectory.py --est results/relative_poses/loop3.txt --
 `results/trajectories/` holds the same estimates chained into trajectories for evo, with the ground
 truth at the same stamps. `scripts/export_trajectories.py` rebuilds them, `scripts/evo_ape_all.sh`
 scores them with `evo_ape -va` (saving the results and plots) and `scripts/plot_trajectories.py` plots
-them. With `--segmented`, the first and the last also rebuild the version drawn in Fig. 4, restarted at
-the ground truth after each pair without ground truth
+them. With `--segmented`, the first and the last also rebuild the segmented version drawn in Fig. 4
+(restarted where a scan falls in a gap of the ground truth)
 ([results/README.md](results/README.md#odometry-trajectories)).
 
 **(c) From the rosbag.** See [Run on a rosbag](#run-on-a-rosbag-ros-noetic). On the raw
 `/radar_enhanced_pcl` scans the results differ slightly from the paper's (see above). On 4DRadarSLAM's
 `/filtered_points` the node registers the paper's input.
+
+**The SLAM results (not in the paper)** are reproduced step by step in [results/slam_backend/README.md](results/slam_backend/README.md#reproduce): the DRG odometry table (`scripts/slam/build_odom_table.py`), the 4DRadarSLAM configuration (`config/4dradarslam/`, checked by `scripts/slam/check_launch.py`), the `/odom` publisher and the scoring.
 
 ### Verification
 
@@ -449,13 +464,18 @@ DRG/
 ├── launch/                      # drg.launch (node), ntu4dradlm.launch (node + rosbag play)
 ├── config/
 │   ├── drg.yaml                 # the paper's parameters
-│   └── norm_stats/<seq>.yaml    # descriptor normalisation statistics per sequence
+│   ├── norm_stats/<seq>.yaml    # descriptor normalisation statistics per sequence (+ snail_radar/)
+│   ├── 4dradarslam/             # the 4DRadarSLAM back-end configuration of results/slam_backend
+│   └── snail_radar/             # the two parameter changes used on SNAIL-Radar
 ├── example/                     # tutorial notebook + 31 scans of loop3 + ground truth
 ├── scripts/                     # offline registration, evaluation and reproduction
+│   ├── slam/                    #   DRG as the front end of 4DRadarSLAM: odometry table, /odom publisher, scoring
+│   └── snail_radar/             #   SNAIL-Radar scans and ground truth -> DRG input
 ├── results/
 │   ├── relative_poses/          # DRG's estimate of every consecutive scan pair (rerun of this code)
 │   ├── trajectories/            # the same, chained over the whole run + ground truth + evo_ape -va results
-│   └── slam_backend/            # not in the paper: DRG in 4DRadarSLAM, without / with loop closure
+│   ├── slam_backend/            # not in the paper: DRG in 4DRadarSLAM, without / with loop closure
+│   └── snail_radar/             # not in the paper: DRG on SNAIL-Radar (Oculii Eagle, ARS548)
 ├── tests/                       # unit tests + the paper's estimates of the 37 windowed sets
 └── docs/PARAMETERS.md           # what every parameter does and how it was chosen
 ```

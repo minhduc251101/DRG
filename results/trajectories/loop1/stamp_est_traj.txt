@@ -1,5 +1,5 @@
 # DRG odometry on NTU4DRadLM loop1: DRG's estimates of all 16038 pairs of consecutive scans chained
-# over the whole run from the identity; no ground truth, restart, keyframing, smoothing or loop closure
+# over the whole run from the identity; no ground truth, keyframing, smoothing or loop closure
 # timestamp tx ty tz qx qy qz qw
 1654229303.119685411 0.000000000 0.000000000 0.000000000 0.000000000 0.000000000 0.000000000 1.000000000
 1654229303.188119173 0.005546704 0.000197031 -0.000244934 -0.000005673 -0.000001722 -0.000087919 0.999999996

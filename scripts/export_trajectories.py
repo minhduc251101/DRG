@@ -3,16 +3,16 @@
 
 results/relative_poses/<seq>.txt holds DRG's estimate for every consecutive scan pair of the run. They
 are chained over the whole run, P_{k+1} = P_k T_k, from the identity, with no ground truth, keyframing,
-smoothing, loop closure or restart: the trajectory DRG itself outputs. Writes, for each sequence:
+smoothing or loop closure: the trajectory DRG itself outputs. Writes, for each sequence:
 
     results/trajectories/<seq>/stamp_est_traj.txt   DRG odometry over the whole run
     results/trajectories/<seq>/stamp_gt_traj.txt    NTU4DRadLM ground truth at the same stamps (linear /
                                                     SLERP interpolation, as in the paper); stamps with no
                                                     ground-truth sample within the gap limit are left out
 
-With --segmented it also writes the version drawn in Fig. 4 of the paper. It is NOT a trajectory DRG
-outputs: only the pairs the paper scored are used (both frames with ground truth), the chain is cut at
-every other pair, and each piece starts at the ground-truth pose of its first scan:
+With --segmented it also writes the segmented version drawn in Fig. 4 of the paper: the pairs the paper scored
+(both frames with ground truth), with the chain restarted after each gap in the ground truth; as described in the
+paper, each segment starts at the ground-truth pose of its first scan:
 
     results/trajectories/<seq>/stamp_est_traj_segmented.txt
 
@@ -104,7 +104,7 @@ def export_sequence(seq, relative_poses_path, gt, out_dir, segmented=False):
         notes.append(f"{n_bridged} missing pair(s) bridged at constant velocity")
     write_tum(os.path.join(out_dir, "stamp_est_traj.txt"),
               [f"DRG odometry on NTU4DRadLM {seq}: DRG's estimates of all {n_pairs} pairs of consecutive scans chained",
-               "over the whole run from the identity; no ground truth, restart, keyframing, smoothing or loop closure"
+               "over the whole run from the identity; no ground truth, keyframing, smoothing or loop closure"
                + (" (" + "; ".join(notes) + ")" if notes else "")],
               stamps, poses)
     write_tum(os.path.join(out_dir, "stamp_gt_traj.txt"),
@@ -120,8 +120,8 @@ def export_sequence(seq, relative_poses_path, gt, out_dir, segmented=False):
             seg_stamps += piece_stamps
             seg_poses += chain_poses(piece, start=gt.pose_at(piece_stamps[0]))
         write_tum(os.path.join(out_dir, "stamp_est_traj_segmented.txt"),
-                  [f"Fig. 4 of the paper, NTU4DRadLM {seq}. NOT a trajectory DRG outputs: only the pairs with ground",
-                   f"truth, cut into {len(pieces)} segment(s) at the others, each starting at the GROUND-TRUTH pose of its first scan"],
+                  [f"Fig. 4 of the paper, NTU4DRadLM {seq}: the pairs with ground truth, chained in {len(pieces)} segment(s);",
+                   "the chain is restarted after each gap in the ground truth, as in the paper"],
                   seg_stamps, seg_poses)
         info["segments"] = len(pieces)
     return info
@@ -134,8 +134,7 @@ def main():
     ap.add_argument("--est-dir", default=os.path.join(REPO, "results", "relative_poses"))
     ap.add_argument("--out-dir", default=os.path.join(REPO, "results", "trajectories"))
     ap.add_argument("--segmented", action="store_true",
-                    help="also write stamp_est_traj_segmented.txt, restarted at the ground truth after each "
-                         "pair without ground truth (Fig. 4 of the paper)")
+                    help="also write stamp_est_traj_segmented.txt, the segmented version of Fig. 4 of the paper")
     args = ap.parse_args()
 
     with open(args.datasets) as f:

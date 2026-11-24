@@ -1,0 +1,14 @@
+# Radar-channel statistics of 20240123_2: every 10th of 33150 scans; params overrides ['min_rcs=-1000']
+norm_stats:
+  rcs:
+    mean: -2.725541114807129
+    std: 9.721222877502441
+  doppler_weight:
+    mean: 0.9578002535261312
+    std: 0.09470475288339542
+  density:
+    mean: 0.039895163592491345
+    std: 0.20154449748736583
+  height:
+    mean: -0.7987591624259949
+    std: 4.093195915222168

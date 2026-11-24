@@ -24,12 +24,15 @@ def main():
     ap.add_argument("--dump", required=True, help="dump root with %%06d/cloud.pcd frame folders")
     ap.add_argument("--out", required=True, help="output YAML")
     ap.add_argument("--every", type=int, default=10, help="use every n-th scan (paper: 10)")
+    ap.add_argument("--params", default=None,
+                    help="DRG parameter YAML, if the run uses non-default limits (e.g. config/snail_radar/ars548.yaml)")
     args = ap.parse_args()
 
     seq = DumpSequence(args.dump)
     indices = seq.indices()[::args.every]
     print(f"{len(indices)} of {len(seq.indices())} scans")
-    stats = compute_norm_stats((seq.points(k) for k in indices), DRGParams())
+    params = DRGParams.from_yaml(args.params) if args.params else DRGParams()
+    stats = compute_norm_stats((seq.points(k) for k in indices), params)
     name = os.path.basename(os.path.normpath(args.dump))
     stats.to_yaml(args.out, comment=f"Radar-channel statistics of {name}: "
                                     f"every {args.every}th of {len(seq.indices())} scans.")

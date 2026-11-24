@@ -1,0 +1,39 @@
+$ evo_ape tum stamp_gt_traj.txt stamp_est_traj_no_loop_closure.txt -va --save_results evo_ape_no_loop_closure.zip --save_plot evo_ape_no_loop_closure.pdf --plot_mode xy
+--------------------------------------------------------------------------------
+Loaded 888 stamps and poses from: stamp_gt_traj.txt
+Loaded 888 stamps and poses from: stamp_est_traj_no_loop_closure.txt
+--------------------------------------------------------------------------------
+Synchronizing trajectories...
+Found 888 of max. 888 possible matching timestamps between...
+	stamp_gt_traj.txt
+and:	stamp_est_traj_no_loop_closure.txt
+..with max. time diff.: 0.01 (s) and time offset: 0.0 (s).
+--------------------------------------------------------------------------------
+Aligning using Umeyama's method...
+Rotation of alignment:
+[[ 0.06633349  0.99761543 -0.01906075]
+ [-0.9912299   0.06807301  0.11326676]
+ [ 0.11429419  0.01138021  0.99338176]]
+Translation of alignment:
+[2.45809566e+05 3.38048261e+06 2.06235571e+01]
+Scale correction: 1.0
+--------------------------------------------------------------------------------
+Compared 888 absolute pose pairs.
+Calculating APE for translation part pose relation...
+--------------------------------------------------------------------------------
+APE w.r.t. translation part (m)
+(with SE(3) Umeyama alignment)
+
+       max	9.131302
+      mean	6.213469
+    median	6.635908
+       min	2.213893
+      rmse	6.469638
+       sse	37168.320762
+       std	1.802505
+
+--------------------------------------------------------------------------------
+Plotting results... 
+Plots saved to evo_ape_no_loop_closure.pdf
+--------------------------------------------------------------------------------
+Saving results to evo_ape_no_loop_closure.zip...

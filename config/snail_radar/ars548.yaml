@@ -1,0 +1,5 @@
+# DRG on the Continental ARS548 of SNAIL-Radar (results/snail_radar): the paper's parameters except the RCS floor.
+# The ARS548 reports calibrated RCS in dBsm (median about -2 dB), so DRG's 0 dB floor would delete most of each
+# scan; on the Oculii data of the paper the floor removes almost nothing. Everything else is the default.
+drg:
+  min_rcs: -1000.0

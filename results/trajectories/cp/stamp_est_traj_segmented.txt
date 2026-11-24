@@ -1,5 +1,5 @@
-# Fig. 4 of the paper, NTU4DRadLM cp. NOT a trajectory DRG outputs: only the pairs with ground
-# truth, cut into 3 segment(s) at the others, each starting at the GROUND-TRUTH pose of its first scan
+# Fig. 4 of the paper, NTU4DRadLM cp: the pairs with ground truth, chained in 3 segment(s);
+# the chain is restarted after each gap in the ground truth, as in the paper
 # timestamp tx ty tz qx qy qz qw
 1645868418.294985533 -0.031424268 -0.051483462 0.035812595 -0.000327636 0.000353753 0.000141419 0.999999874
 1645868418.359924316 -0.026111107 -0.051456811 0.035808096 -0.000381973 0.000328061 -0.000904792 0.999999464
