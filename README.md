@@ -19,7 +19,7 @@
   Tiancheng Li, Zhenzi Li, Alen Alempijevic, Shoudong Huang, Australasian Conference on Robotics and
   Automation (ACRA), 2026.
 - **Tutorial**: 📂 [`example/example.ipynb`](example/example.ipynb), the six stages on real radar data. It needs no ROS and no dataset download.
-- **Released estimates**: 📂 [`results/`](results), DRG's estimate for each of the 51,940 scan pairs behind the paper's tables, and the trajectories of all six sequences with ground truth and plots, ready for evo.
+- **Released results**: 📂 [`results/`](results/README.md), all from a rerun of this code: DRG's estimate for every consecutive scan pair of the six sequences (the paper's Tables 1 and 3 are recomputed from them), the real trajectories against the ground truth with their `evo_ape -va` results and plots, and the same odometry in the full 4DRadarSLAM system with and without loop closure.
 
 <p align="center">
   <img src="docs/figures/drg_loop3.gif" alt="DRG on NTU4DRadLM loop3" width="640"/>
@@ -46,19 +46,32 @@ pipelines ignore: the **Doppler velocity** and the **radar cross section (RCS)**
 
 ## 📊 Results
 
-Every consecutive scan pair of six [NTU4DRadLM](https://github.com/junzhang2016/NTU4DRadLM)
-sequences (Oculii Eagle, 12 Hz; garden at its ~1 s keyframes), 51,940 pairs in total. TE [m] and RE [°]
-are the translation and rotation errors of each pair against the ground truth.
+The DRG numbers in this section were recomputed on 24 Nov 2026 by **rerunning this repository's code**
+on every consecutive scan pair of six [NTU4DRadLM](https://github.com/junzhang2016/NTU4DRadLM) sequences
+(Oculii Eagle, 12 Hz) and scoring the output against the ground truth; none is copied from the paper.
+The comparison with other methods is the paper's (they were not rerun). See
+[Reproducing the paper result](#reproducing-the-paper-result).
+
+### Per-pair accuracy and drift (Tables 1 and 3 of the paper)
+
+The paper scores every consecutive pair whose two frames have ground truth (garden: its ~1 s
+keyframes), 51,940 pairs in total. TE [m] and RE [°] are the translation and rotation errors of each
+pair against the ground truth. *t*_rel and *r*_rel are the KITTI drift of the chained estimates over
+100–800 m.
 
 | DRG | cp | garden | nyl | loop1 | loop2 | loop3 |
 |---|---|---|---|---|---|---|
 | platform | handcart | handcart | handcart | car | car | car |
-| pairs | 5,256 | 272 | 11,243 | 15,992 | 11,568 | 7,609 |
+| pairs scored | 5,256 | 272 | 11,243 | 15,992 | 11,568 | 7,609 |
 | mean TE [m] | 0.0135 | 0.0554 | 0.0229 | 0.0736 | 0.0687 | 0.0778 |
 | mean RE [°] | 0.189 | 0.555 | 0.223 | 0.101 | 0.142 | 0.114 |
 | median TE [m] | 0.0104 | 0.0459 | 0.0164 | 0.0487 | 0.0447 | 0.0532 |
+| median RE [°] | 0.156 | 0.473 | 0.188 | 0.062 | 0.084 | 0.084 |
 | *t*_rel [%] (chained, no back end) | 1.55 | 6.56 | 5.83 | 9.03 | 7.30 | 5.94 |
 | *r*_rel [°/m] | 0.0465 | 0.0761 | 0.0225 | 0.0298 | 0.0242 | 0.0240 |
+
+On these pairs the rerun gives the paper's own estimates to within 2e-7 (largest difference of any matrix entry) and every
+number of the table above is the paper's.
 
 The paper compares DRG with FPFH + TEASER++, APDGICP (the 4DRadarSLAM front end) and the retrained
 learned methods RaFlow and CAO-RONet. Leaving aside the learned methods' within-sequence test splits,
@@ -73,16 +86,38 @@ registration.** At 12 Hz the fused translation is 93 % Doppler, and the same fus
 APDGICP gives the same accuracy.
 
 <p align="center"><img src="docs/figures/trajectories.png" width="900"></p>
-<p align="center"><em>Chained per-pair estimates (no keyframes, smoothing or loop closure) on the four longest sequences (paper, Fig. 4). Each segment starts at the ground-truth pose of its first scan.</em></p>
+<p align="center"><em>Fig. 4 of the paper: chained per-pair estimates on the four longest sequences, without keyframes, smoothing or loop closure. As in the paper, each segment starts at the ground-truth pose of its first scan (nyl: 1 segment, loop1: 22, loop2: 10, loop3: 6), so the figure shows the drift within the segments. Rerunning this code reproduces DRG's segments exactly (<code>results/trajectories/&lt;sequence&gt;/stamp_est_traj_segmented.txt</code>).</em></p>
 
-All numbers above can be recomputed from the released estimates in seconds; see
-[Reproducing the paper result](#reproducing-the-paper-result). A plot of every sequence over the
-whole run, never restarted at the ground truth and with its ATE, is in
-[`results/trajectories/<sequence>/trajectory.pdf`](results/README.md#odometry-trajectories).
+### Trajectory error, with and without loop closure (not in the paper)
 
-**Supplementary, not in the paper:** [`results/slam_backend/`](results/slam_backend/README.md) runs
-the same odometry as the front end of the full 4DRadarSLAM system (keyframes, pose graph, loop
-closure) and gives the absolute trajectory error of each sequence.
+The paper reports no absolute trajectory error. Here are DRG's real trajectories, never restarted at
+the ground truth, alone and as the front end of the full
+[4DRadarSLAM](https://github.com/zhuge2333/4DRadarSLAM) system run from the rosbags with loop closure
+off and on. ATE is the RMSE [m] of `evo_ape tum <ground truth> <estimate> -va` (SE(3) Umeyama
+alignment). The saved results (`--save_results`) and plots (`--save_plot`) of every cell are in
+[`results/`](results/README.md).
+
+| ATE [m], `evo_ape -va` | cp | garden | nyl | loop1 | loop2 | loop3 |
+|---|---|---|---|---|---|---|
+| ground-truth path | 240 m | 332 m | 1,009 m | 6,944 m | 4,793 m | 4,233 m |
+| DRG odometry, every scan | 1.61 | 3.15 | 9.66 | 538.74 | 121.86 | 58.38 |
+| DRG odometry, at the SLAM keyframes | 1.57 | 3.15 | 9.40 | 536.44 | 120.01 | 56.85 |
+| + 4DRadarSLAM back end, no loop closure | 1.66 | 7.09 | 9.35 | 535.14 | 111.72 | 55.41 |
+| + 4DRadarSLAM back end, loop closure | 0.51 | 6.30 | 7.50 | 535.15 | 14.09 | 11.98 |
+| loop closures | 1 | 1 | 0 | 0 | 47 | 55 |
+
+With loop closure the result varies from run to run, because 4DRadarSLAM's back end is not deterministic: three runs of the same input gave 11.98, 21.23, 21.63 m on loop3 and 14.09, 57.26, 101.11 m on loop2 (the table shows the first run). nyl closes no loop in either run (0 loop closures), so the difference between its two back-end rows is this run-to-run variation too. garden: the whole garden run, every scan (the paper's 1 s keyframes cover 142 m of it: ATE 1.02 m). The two odometry rows differ only in where they are scored, at every scan or at the SLAM keyframes. The back end without loop closure still optimises a pose graph with IMU and ego-velocity preintegration edges.
+
+<p align="center"><img src="docs/figures/trajectories_real.png" width="900"></p>
+
+**Why loop1 and loop2 look so much better in Fig. 4 of the paper (above).** Fig. 4 draws the chained estimates restarted at the ground-truth pose after every pair without ground truth: 21 times on loop1 and 9 times on loop2. Each restart deletes the drift accumulated until then (APE 20.7 m and 52.9 m for these versions). A real run is never restarted:
+
+* **loop1.** The rosbag has a 17.4 s radar dropout in which the car drives 90 m and turns 43°. DRG, like any scan-to-scan method, estimates 0.46 m and 0° for that pair, so the heading is wrong from there on. loop1 never returns to a place it has passed, so no loop closure can correct it (0 loop closures), and 4DRadarSLAM's pose graph follows the odometry rather than the IMU.
+* **loop2.** There is no dropout, but the per-pair heading errors add up to 35° over 4.8 km. Here the full SLAM system helps: 47 loop closures bring the ATE to 14.1 m (14.1, 57.3, 101.1 m in three runs). The result hinges on whether the loop verification accepts the first revisit, which it did in 2 of these 3 runs; with the odometry used before this rerun it was rejected and no loop closed.
+
+Details: [results/README.md](results/README.md#odometry-trajectories) and [results/slam_backend/README.md](results/slam_backend/README.md).
+
+<p align="center"><img src="docs/figures/loop1_loop2_paper_vs_real.png" width="820"></p>
 
 ## 🍎 Tutorial (Python)
 
@@ -247,8 +282,8 @@ cd ~/drg_out/loop3
 python3 ~/catkin_ws/src/DRG/scripts/interpolate_gt.py --gt /data/NTU4DRadLM/loop3/gt_odom.txt \
     --est stamp_est_traj.txt --out stamp_gt_traj.txt
 
-# absolute trajectory error after SE(3) alignment
-evo_ape tum stamp_gt_traj.txt stamp_est_traj.txt -va --plot --save_results ape.zip
+# absolute trajectory error after SE(3) alignment, with evo's saved results and plots
+evo_ape tum stamp_gt_traj.txt stamp_est_traj.txt -va --save_results ape.zip --save_plot ape.pdf --plot_mode xy
 # relative pose error between consecutive scans (close to the paper's per-pair TE)
 evo_rpe tum stamp_gt_traj.txt stamp_est_traj.txt -va --delta 1 --delta_unit f --pose_relation trans_part
 ```
@@ -257,41 +292,52 @@ On the tutorial window, interpolation lowers the APE RMSE from 0.23 m (nearest s
 `evo_rpe` gives a mean of 0.0442 m against the paper's 0.0440 m; the two differ only in how the error
 transform is composed.
 
-**The paper's trajectories.** [`results/trajectories/<sequence>/`](results/README.md#odometry-trajectories)
-holds DRG's trajectory, the ground truth at the same stamps and a plot (`trajectory.pdf`) for all
-six sequences of the paper. The trajectory chains the paper's per-pair estimates over the whole run
-from the ground-truth pose of the first scan and is never restarted, like the node's own output:
+**The released trajectories.** [`results/trajectories/<sequence>/`](results/README.md#odometry-trajectories)
+holds DRG's trajectory over the whole run (the estimates of every consecutive pair, chained from the
+identity and never restarted, like the node's own output), the ground truth at the same stamps, a plot,
+and the output of `evo_ape -va` with its saved results and plots (`evo_ape.txt`, `.zip`, `.pdf`):
 
 ```bash
-cd results/trajectories
-evo_ape tum loop3/stamp_gt_traj.txt loop3/stamp_est_traj.txt -va --plot --plot_mode xy
+cd results/trajectories/loop3
+evo_ape tum stamp_gt_traj.txt stamp_est_traj.txt -va --save_results evo_ape.zip --save_plot evo_ape.pdf --plot_mode xy
 ```
+
+`bash scripts/evo_ape_all.sh` reruns this for every trajectory in `results/`.
 
 ## Reproducing the paper result
 
-There are three levels, from fastest to most complete.
+The paper's results are DRG's estimates of every consecutive scan pair, scored against the ground truth
+(Tables 1 and 3, and the trajectories of Fig. 4). There are three ways to get them.
 
-**(a) Re-score the released estimates (seconds).** `results/relative_poses/<seq>.txt` holds DRG's
-estimate for every pair of Table 1, exactly as produced for the paper. Scoring them gives the DRG
-rows of Tables 1 and 3, the numbers in [Results](#-results):
-
-```bash
-python3 scripts/evaluate_pairs.py      --est results/relative_poses/loop3.txt --gt /data/NTU4DRadLM/loop3/gt_odom.txt
-python3 scripts/evaluate_trajectory.py --est results/relative_poses/loop3.txt --gt /data/NTU4DRadLM/loop3/gt_odom.txt
-# nyl: add --max-gt-gap 0.15
-```
-
-`results/trajectories/` holds the same estimates chained into trajectories for evo, with the
-ground truth at the same stamps; `scripts/export_trajectories.py` rebuilds them and
-`scripts/plot_trajectories.py` their plots, and with `--segmented` both also rebuild the version of
-Fig. 4, restarted at the ground truth after each missing pair
-([results/README.md](results/README.md#odometry-trajectories)).
-
-**(b) Re-run DRG on the paper's input.** The paper registers the per-scan clouds that 4DRadarSLAM
-(Go-RIO version) writes with its `/radar_graph_slam/dump` service (one folder per scan, with
+**(a) Run DRG on every scan pair, as the paper did.** The paper registers the per-scan clouds that
+4DRadarSLAM (Go-RIO version) writes with its `/radar_graph_slam/dump` service (one folder per scan, with
 `cloud.pcd` and the stamp). Setting the keyframe thresholds to zero
 (`keyframe_delta_trans_back_end:=0 keyframe_delta_angle:=0`) keeps every scan; garden uses the
-default ~1 s keyframes. With such dumps:
+default ~1 s keyframes. List the dumps and the ground truth in `config/datasets.yaml`, then:
+
+```bash
+cp config/datasets_example.yaml config/datasets.yaml     # edit the paths
+python3 scripts/reproduce_paper.py --datasets config/datasets.yaml --jobs 16 --out rerun
+```
+
+`reproduce_paper.py` registers every consecutive pair of each dump with the paper's parameters, in
+parallel (every pair is seeded, so the estimates do not depend on `--jobs`), writes
+`rerun/relative_poses/`, and prints the DRG rows of Tables 1 and 3 (the table in [Results](#-results))
+with the largest difference to the released estimates. The six sequences take about 2 h with 16
+processes. `results/` was made the same way: `scripts/register_dump.py`, which calls the same
+registration function, on all 59,621 pairs in chunks of 200 pairs run in parallel (and the
+2 cp pairs that span a scan without point cloud, registered with the same library). The
+trajectories, the version of Fig. 4 and their `evo_ape -va` results then follow with
+
+```bash
+python3 scripts/export_trajectories.py --datasets config/datasets.yaml --est-dir rerun/relative_poses \
+    --out-dir rerun/trajectories --segmented
+cd rerun/trajectories/loop1
+evo_ape tum stamp_gt_traj.txt stamp_est_traj.txt -va --save_results evo_ape.zip --save_plot evo_ape.pdf --plot_mode xy
+evo_ape tum stamp_gt_traj.txt stamp_est_traj_segmented.txt -va      # the version of Fig. 4
+```
+
+Smaller checks on the same dumps:
 
 ```bash
 # one window, e.g. carpark tuning set 1 (30 pairs from frame 4470)
@@ -299,9 +345,43 @@ python3 scripts/register_dump.py --dump /data/dumps/cp --stats config/norm_stats
     --gt /data/NTU4DRadLM/cp/gt_odom.txt --start 4470 --num-pairs 30 --out results/cp_set1
 
 # all 37 windowed sets, compared pair by pair with the paper's estimates
-cp config/datasets_example.yaml config/datasets.yaml     # edit the paths
 python3 scripts/reproduce_windowed_sets.py --datasets config/datasets.yaml
 ```
+
+**(b) Re-score the released estimates (seconds).** `results/relative_poses/<seq>.txt` holds DRG's
+estimate of every consecutive pair, from the run above. Scored as in the paper (only the pairs whose two
+frames have ground truth), they give Tables 1 and 3; this needs only the ground truth:
+
+```bash
+python3 scripts/reproduce_paper.py --datasets config/datasets.yaml --score-only --out results
+```
+
+```
+sequence    pairs  scored  mean TE  med TE  mean RE  med RE  t_rel %   r_rel   largest difference to results/relative_poses
+cp           5256    5256   0.0135  0.0104    0.189   0.156     1.55  0.0465   (the released file itself)
+garden        272     272   0.0554  0.0459    0.555   0.473     6.56  0.0761   (the released file itself)
+nyl         11243   11243   0.0229  0.0164    0.223   0.188     5.83  0.0225   (the released file itself)
+loop1       16038   15992   0.0736  0.0487    0.101   0.062     9.03  0.0298   (the released file itself)
+loop2       11587   11568   0.0687  0.0447    0.142   0.084     7.30  0.0242   (the released file itself)
+loop3        7619    7609   0.0778  0.0532    0.114   0.084     5.94  0.0240   (the released file itself)
+
+TE [m] and RE [deg] per pair (Table 1); t_rel [%] and r_rel [deg/m] over 100-800 m (Table 3).
+```
+
+One sequence at a time: `scripts/evaluate_pairs.py` (Table 1) and `scripts/evaluate_trajectory.py`
+(Table 3), with `--max-gt-gap 0.15` on nyl:
+
+```bash
+python3 scripts/evaluate_pairs.py      --est results/relative_poses/loop3.txt --gt /data/NTU4DRadLM/loop3/gt_odom.txt
+python3 scripts/evaluate_trajectory.py --est results/relative_poses/loop3.txt --gt /data/NTU4DRadLM/loop3/gt_odom.txt
+```
+
+`results/trajectories/` holds the same estimates chained into trajectories for evo, with the ground
+truth at the same stamps. `scripts/export_trajectories.py` rebuilds them, `scripts/evo_ape_all.sh`
+scores them with `evo_ape -va` (saving the results and plots) and `scripts/plot_trajectories.py` plots
+them. With `--segmented`, the first and the last also rebuild the version drawn in Fig. 4, restarted at
+the ground truth after each pair without ground truth
+([results/README.md](results/README.md#odometry-trajectories)).
 
 **(c) From the rosbag.** See [Run on a rosbag](#run-on-a-rosbag-ros-noetic). On the raw
 `/radar_enhanced_pcl` scans the results differ slightly from the paper's (see above). On 4DRadarSLAM's
@@ -309,8 +389,11 @@ python3 scripts/reproduce_windowed_sets.py --datasets config/datasets.yaml
 
 ### Verification
 
-* **Released estimates.** Re-scored with `evaluate_pairs.py` and `evaluate_trajectory.py`, they give the
-  paper's mean / median TE and RE (Table 1) and *t*_rel / *r*_rel (Table 3) on all six sequences.
+* **Full rerun.** Run again on every consecutive pair of the six sequences (52,015
+  pairs, plus garden every scan), this code reproduces the paper's own estimates of its 51,940 pairs to
+  within 2e-7 (largest difference of any matrix entry). Re-scored with `evaluate_pairs.py` and
+  `evaluate_trajectory.py`, they give the paper's mean / median TE and RE (Table 1) and *t*_rel / *r*_rel
+  (Table 3) on all six sequences, to every printed digit.
 * **Library.** `reproduce_windowed_sets.py` reruns all 37 windowed sets (1,110 pairs) with Open3D 0.18.0.
   690 pairs are bit-identical to the paper's estimates and all agree within 2.5e-10 m, which is
   floating-point rounding (`tests/reference/windowed_sets_seed42.json`).
@@ -370,15 +453,19 @@ DRG/
 ├── example/                     # tutorial notebook + 31 scans of loop3 + ground truth
 ├── scripts/                     # offline registration, evaluation and reproduction
 ├── results/
-│   ├── relative_poses/          # DRG's per-pair estimates behind the paper's tables
-│   ├── trajectories/            # the same, chained: trajectories + ground truth (TUM, for evo) + plots
-│   └── slam_backend/            # not in the paper: DRG as the front end of the full 4DRadarSLAM
+│   ├── relative_poses/          # DRG's estimate of every consecutive scan pair (rerun of this code)
+│   ├── trajectories/            # the same, chained over the whole run + ground truth + evo_ape -va results
+│   └── slam_backend/            # not in the paper: DRG in 4DRadarSLAM, without / with loop closure
 ├── tests/                       # unit tests + the paper's estimates of the 37 windowed sets
 └── docs/PARAMETERS.md           # what every parameter does and how it was chosen
 ```
 
 ## Notes and limitations
 
+* **Scan-to-scan odometry drifts.** Without a back end the chained trajectory is not globally
+  consistent: the ATE over the whole run is 122 m on loop2 (4.8 km). Like any
+  scan-to-scan method DRG sees nothing between two scans: across loop1's 17.4 s radar dropout it estimates
+  0.46 m while the car drives 90 m and turns 43° ([results](results/README.md#odometry-trajectories)).
 * **Runs offline.** About 1–5 s per pair with 40 RANSAC trials and 0.4 s with one trial, on one CPU core.
   Real time at 12 Hz needs a compiled implementation.
 * **Normalisation statistics** of the descriptor are computed per sequence from every 10th scan

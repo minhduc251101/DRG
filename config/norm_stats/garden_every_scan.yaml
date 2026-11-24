@@ -1,0 +1,14 @@
+# Radar-channel statistics of the garden every-scan dump (not in the paper): every 10th of 7607 scans.
+norm_stats:
+  rcs:
+    mean: 12.33068561553955
+    std: 3.3285200595855713
+  doppler_weight:
+    mean: 0.9671246346714242
+    std: 0.05475774545239585
+  density:
+    mean: 12.986893896971186
+    std: 16.77552519811417
+  height:
+    mean: -0.6680035591125488
+    std: 1.2384543418884277

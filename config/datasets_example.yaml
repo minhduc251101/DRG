@@ -10,3 +10,6 @@ nyl:    {dump: /data/dumps/nyl,    gt: /data/NTU4DRadLM/nyl/gt_odom.txt,    max_
 loop1:  {dump: /data/dumps/loop1,  gt: /data/NTU4DRadLM/loop1/gt_odom.txt,  max_gt_gap: 0.1}
 loop2:  {dump: /data/dumps/loop2,  gt: /data/NTU4DRadLM/loop2/gt_odom.txt,  max_gt_gap: 0.1}
 loop3:  {dump: /data/dumps/loop3,  gt: /data/NTU4DRadLM/loop3/gt_odom.txt,  max_gt_gap: 0.1}
+# Not in the paper: every scan of garden (keyframe thresholds 0, like the other sequences), the input
+# of the garden SLAM run in results/slam_backend/ (norm stats: config/norm_stats/garden_every_scan.yaml).
+garden_every_scan: {dump: /data/dumps/garden_every_scan, gt: /data/NTU4DRadLM/garden/gt_odom.txt, max_gt_gap: 0.1}

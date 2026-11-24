@@ -1,4 +1,5 @@
-# NTU4DRadLM nyl ground truth (gt_odom.txt) interpolated at the radar stamps
+# NTU4DRadLM nyl ground truth (gt_odom.txt) interpolated at the radar stamps (linear / SLERP);
+# 0 of 11244 stamps have no ground-truth sample within 0.15 s and are left out
 # timestamp tx ty tz qx qy qz qw
 1645870656.596793413 -0.015585667 -0.040266504 0.042004136 -0.000230957 0.002538869 -0.001214870 0.999996012
 1645870656.698418140 -0.013018468 -0.039740948 0.041758629 -0.000471682 0.002937421 -0.001721296 0.999994093

@@ -99,7 +99,7 @@ def read_relative_poses(path: str) -> list:
     """relative_poses.txt -> chains of consecutive pairs, each a list of (stamp_target, stamp_source, T).
 
     A new chain starts wherever a pair does not continue the previous one, i.e. where a pair is
-    missing (a frame without ground truth in the released estimates).
+    missing (e.g. a scan without point cloud, or a partial run).
     """
     chains = []
     for row in np.loadtxt(path, ndmin=2):
@@ -121,3 +121,40 @@ def chain_poses(chain, start: Optional[np.ndarray] = None) -> list:
     for _, _, T in chain:
         poses.append(poses[-1] @ T)
     return poses
+
+
+def scored_chains(chains, gt: GroundTruth):
+    """The pieces of the chains that the paper scores: maximal runs of consecutive pairs whose two frames
+    both have ground truth. Returns (pieces, number of pairs without ground truth)."""
+    pieces, skipped = [], 0
+    for chain in chains:
+        piece = []
+        for pair in chain:
+            if gt.relative(pair[0], pair[1]) is None:
+                skipped += 1
+                if piece:
+                    pieces.append(piece)
+                piece = []
+            else:
+                piece.append(pair)
+        if piece:
+            pieces.append(piece)
+    return pieces, skipped
+
+
+def score_relative_poses(path: str, gt: GroundTruth) -> dict:
+    """Score a relative_poses.txt exactly as the paper: TE / RE of every pair whose two frames have ground
+    truth (Table 1), and the KITTI drift of the chained estimates, cut wherever a pair is missing or has no
+    ground truth (Table 3). t_rel [%] / r_rel [deg/m] are None if no 100 m segment fits."""
+    pieces, skipped = scored_chains(read_relative_poses(path), gt)
+    te, re, segments = [], [], []
+    for piece in pieces:
+        for stamp_target, stamp_source, T in piece:
+            e_t, e_r = pose_error(T, gt.relative(stamp_target, stamp_source))
+            te.append(e_t)
+            re.append(e_r)
+        segments.append(kitti_segments([gt.pose_at(t) for t in chain_stamps(piece)], chain_poses(piece)))
+    seg = np.concatenate(segments) if segments else np.zeros((0, 3))
+    return {"te": np.array(te), "re": np.array(re), "skipped": skipped, "chains": len(pieces), "segments": seg,
+            "t_rel": 100 * seg[:, 1].mean() if len(seg) else None,
+            "r_rel": seg[:, 2].mean() if len(seg) else None}

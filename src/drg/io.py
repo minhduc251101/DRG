@@ -64,6 +64,13 @@ class DumpSequence:
         if not self.frames:
             raise FileNotFoundError(f"no frame folders with cloud.pcd under {root}")
 
+    @classmethod
+    def from_frames(cls, root: str, frames: Dict[int, str]) -> "DumpSequence":
+        """A dump whose frame folders are already known: {index: folder}. Skips listing the dump."""
+        seq = cls.__new__(cls)
+        seq.root, seq.frames = root, dict(frames)
+        return seq
+
     def indices(self):
         return sorted(self.frames)
 

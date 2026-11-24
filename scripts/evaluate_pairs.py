@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 
 import numpy as np  # noqa: E402
 
-from drg.evaluation import GroundTruth, pose_error  # noqa: E402
+from drg.evaluation import GroundTruth, score_relative_poses  # noqa: E402
 
 
 def main():
@@ -28,20 +28,9 @@ def main():
     ap.add_argument("--max-gt-gap", type=float, default=0.1, help="s (paper: 0.1, nyl 0.15)")
     args = ap.parse_args()
 
-    gt = GroundTruth(args.gt, args.max_gt_gap)
-    te, re, skipped = [], [], 0
-    for row in np.loadtxt(args.est, ndmin=2):
-        T_est = np.vstack([row[2:14].reshape(3, 4), [0, 0, 0, 1]])
-        T_gt = gt.relative(row[0], row[1])
-        if T_gt is None:
-            skipped += 1
-            continue
-        e_t, e_r = pose_error(T_est, T_gt)
-        te.append(e_t)
-        re.append(e_r)
-
-    te, re = np.array(te), np.array(re)
-    print(f"{len(te)} pairs scored, {skipped} without ground truth within {args.max_gt_gap} s")
+    score = score_relative_poses(args.est, GroundTruth(args.gt, args.max_gt_gap))
+    te, re = score["te"], score["re"]
+    print(f"{len(te)} pairs scored, {score['skipped']} without ground truth within {args.max_gt_gap} s")
     print(f"TE [m]  : mean {te.mean():.4f}  median {np.median(te):.4f}")
     print(f"RE [deg]: mean {re.mean():.4f}  median {np.median(re):.4f}")
 
