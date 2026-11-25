@@ -19,6 +19,7 @@
   Tiancheng Li, Zhenzi Li, Alen Alempijevic, Shoudong Huang, Australasian Conference on Robotics and
   Automation (ACRA), 2026.
 - **Tutorial**: 📂 [`example/example.ipynb`](example/example.ipynb), the six stages on real radar data. It needs no ROS and no dataset download.
+- **Setup guide for coding agents**: 📂 [`AGENTS.md`](AGENTS.md), step by step from a fresh machine to the paper's Tables 1 and 3, with the expected output of every command. A coding agent can follow it as it is, and so can a person.
 - **Released results**: 📂 [`results/`](results/README.md), all from a rerun of this code: DRG's estimate for every consecutive scan pair of the six sequences (the paper's Tables 1 and 3 are recomputed from them), the whole-run trajectories with their `evo_ape -va` results and plots, and the same odometry in the full 4DRadarSLAM system with and without loop closure. Not in the paper: the same code on SNAIL-Radar ([`results/snail_radar/`](results/snail_radar/README.md)).
 
 <p align="center">
@@ -321,6 +322,7 @@ evo_ape tum stamp_gt_traj.txt stamp_est_traj.txt -va --save_results evo_ape.zip 
 
 The paper's results are DRG's estimates of every consecutive scan pair, scored against the ground truth
 (Tables 1 and 3, and the trajectories of Fig. 4). There are three ways to get them.
+[`AGENTS.md`](AGENTS.md) goes through all three step by step, with the expected output of every command.
 
 **(a) Run DRG on every scan pair, as the paper did.** The paper registers the per-scan clouds that
 4DRadarSLAM (Go-RIO version) writes with its `/radar_graph_slam/dump` service (one folder per scan, with
