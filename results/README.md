@@ -12,7 +12,7 @@ sequences, then scoring the output against the ground truth with
 * [`slam_backend/`](slam_backend/README.md): **not in the paper.** DRG as the front end of the full
   4DRadarSLAM system, run with loop closure off and on, with `evo_ape -va` results
 * [`snail_radar/`](snail_radar/README.md): **not in the paper.** The same code on five SNAIL-Radar sequences
-  (Oculii Eagle and Continental ARS548): odometry, and 4DRadarSLAM on the ARS548, with `evo_ape -va` results
+  (Oculii Eagle and Continental ARS548): odometry (including the Doppler–RCS gate re-tuned to the ARS548), and 4DRadarSLAM on the ARS548, with `evo_ape -va` results
 
 ## Per-pair estimates
 

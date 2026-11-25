@@ -19,7 +19,7 @@
   Tiancheng Li, Zhenzi Li, Alen Alempijevic, Shoudong Huang, Australasian Conference on Robotics and
   Automation (ACRA), 2026.
 - **Tutorial**: 📂 [`example/example.ipynb`](example/example.ipynb), the six stages on real radar data. It needs no ROS and no dataset download.
-- **Setup guide for coding agents**: 📂 [`AGENTS.md`](AGENTS.md), step by step from a fresh machine to the paper's Tables 1 and 3, with the expected output of every command. A coding agent can follow it as it is, and so can a person.
+- **Setup guide for coding agents**: 📂 [`AGENTS.md`](AGENTS.md), step by step from a fresh machine to the paper's Tables 1 and 3, with the expected output of every command. A coding agent can follow it as it is, and so can a person. To hand it to Claude Code, paste the prompt in [Reproduce with Claude Code](#-reproduce-with-claude-code).
 - **Released results**: 📂 [`results/`](results/README.md), all from a rerun of this code: DRG's estimate for every consecutive scan pair of the six sequences (the paper's Tables 1 and 3 are recomputed from them), the whole-run trajectories with their `evo_ape -va` results and plots, and the same odometry in the full 4DRadarSLAM system with and without loop closure. Not in the paper: the same code on SNAIL-Radar ([`results/snail_radar/`](results/snail_radar/README.md)).
 
 <p align="center">
@@ -123,15 +123,16 @@ Details: [results/README.md](results/README.md#odometry-trajectories) and [resul
 
 ### SNAIL-Radar (not in the paper)
 
-The same code, unchanged and with the paper's parameters, on five sequences of [SNAIL-Radar](https://snail-radar.github.io) with two radars: radar-only scan-to-scan odometry over the whole run, ATE [m] of `evo_ape -va`:
+The same code on five sequences of [SNAIL-Radar](https://snail-radar.github.io) with two radars: radar-only scan-to-scan odometry over the whole run, ATE [m] of `evo_ape -va`. The first two rows use the paper's parameters unchanged. The third re-tunes the two gate thresholds to the ARS548 with the paper's own rules (2 dB and 0.05 m/s instead of 1 dB and 0.01 m/s), because the ARS548 quantises RCS to 1 dBsm and has a noisier Doppler, so the paper's gate kept only 34 % of its true matches:
 
 | | 20240113_1 | 20240113_3 | 20240115_2 | 20240123_2 | 20240123_3 |
 |---|---|---|---|---|---|
 | ground-truth path | 541 m | 4,609 m | 6,627 m | 8,525 m | 2,228 m |
 | Oculii Eagle, accumulative cloud | 48.75 | 79.66 | 71.90 | 197.87 | 45.76 |
 | Continental ARS548 (Soft-REVE, as in the paper) | 5.02 | 369.52 | 805.51 | 183.99 | 121.42 |
+| Continental ARS548 (Soft-REVE, gate re-tuned to the ARS548) | 4.06 | 163.08 | 155.12 | 77.95 | 37.64 |
 
-Other inputs, 4DRadarSLAM on the ARS548 without and with loop closure, and why the ground truth is not included: [results/snail_radar/README.md](results/snail_radar/README.md).
+Other inputs, the gate measurement behind the third row, 4DRadarSLAM on the ARS548 without and with loop closure, and why the ground truth is not included: [results/snail_radar/README.md](results/snail_radar/README.md).
 
 ## 🍎 Tutorial (Python)
 
@@ -158,6 +159,43 @@ The same check from the command line (about 1 min):
 python3 scripts/reproduce_windowed_sets.py --datasets example/datasets.yaml --sets loop3_set4_5692
 # 30 pairs compared with the paper: ... max |dT| = 3.10e-11   loop3  30  0.0440  0.133   PASSED
 ```
+
+## 🤖 Reproduce with Claude Code
+
+[`AGENTS.md`](AGENTS.md) guides a coding agent from a fresh machine to the paper's Tables 1 and 3,
+with the expected output of every command. To let [Claude Code](https://code.claude.com/docs/en/overview)
+do the work, start it (`claude` in a terminal) in an empty folder or in a clone of this repository,
+and paste this prompt:
+
+```text
+Clone https://github.com/minhduc251101/DRG.git and work in the clone
+(skip this if the current folder is already a clone of it).
+Then follow its AGENTS.md to reproduce the DRG paper's results on this machine:
+- First ask me the questions of section 0 that this message does not answer,
+  and wait for my answers.
+- Run the steps in order, and run every command yourself. Before you move on,
+  compare the output with the expected output in AGENTS.md.
+  If a check fails, stop and show me both.
+- Never change parameters, package versions or the scoring to make a number match.
+  Do not edit files that git tracks, and ask me before you use sudo.
+- End with the report of section 11.
+```
+
+Claude Code clones the repository, reads `AGENTS.md` and asks what to run, which Python environment
+to use, where NTU4DRadLM is and where to write the results. **A** always comes first:
+
+| | What runs | What you need |
+|---|---|---|
+| **A** | The unit tests, then one window of the paper's input (31 scans of loop3, shipped in `example/`), compared with the paper's estimates. A few minutes. | Python 3.8–3.11 and about 2 GB of disk. No dataset. |
+| **B** | Tables 1 and 3, recomputed from DRG's released estimates. Under a minute. | The six `gt_odom.txt` files of NTU4DRadLM (about 6 MB). |
+| **C** | DRG on every scan pair, as in the paper. About 2 h with 16 processes. | The per-scan dumps (about 21 GB), made with ROS Noetic and a pinned Go-RIO from the bags (49 GB). |
+| **D** | The ROS node on a rosbag, starting with a 10 s test on loop3. | ROS Noetic on Ubuntu 20.04, and the bags. |
+
+To skip the questions, add your answers at the end of the prompt, e.g.
+`Run A and B. Make a new venv with python3.11. NTU4DRadLM is in /data/NTU4DRadLM.`
+
+At the end, Claude Code reports which level it reached, compares every result with its expected value
+and lists any difference. Other coding agents can be given the same prompt.
 
 ## Installation
 
@@ -323,6 +361,7 @@ evo_ape tum stamp_gt_traj.txt stamp_est_traj.txt -va --save_results evo_ape.zip 
 The paper's results are DRG's estimates of every consecutive scan pair, scored against the ground truth
 (Tables 1 and 3, and the trajectories of Fig. 4). There are three ways to get them.
 [`AGENTS.md`](AGENTS.md) goes through all three step by step, with the expected output of every command.
+To let Claude Code follow it for you, use the prompt in [Reproduce with Claude Code](#-reproduce-with-claude-code).
 
 **(a) Run DRG on every scan pair, as the paper did.** The paper registers the per-scan clouds that
 4DRadarSLAM (Go-RIO version) writes with its `/radar_graph_slam/dump` service (one folder per scan, with
@@ -468,7 +507,7 @@ DRG/
 │   ├── drg.yaml                 # the paper's parameters
 │   ├── norm_stats/<seq>.yaml    # descriptor normalisation statistics per sequence (+ snail_radar/)
 │   ├── 4dradarslam/             # the 4DRadarSLAM back-end configuration of results/slam_backend
-│   └── snail_radar/             # the two parameter changes used on SNAIL-Radar
+│   └── snail_radar/             # the parameter changes used on SNAIL-Radar (1 RANSAC trial; ARS548 RCS floor; ARS548 gate)
 ├── example/                     # tutorial notebook + 31 scans of loop3 + ground truth
 ├── scripts/                     # offline registration, evaluation and reproduction
 │   ├── slam/                    #   DRG as the front end of 4DRadarSLAM: odometry table, /odom publisher, scoring

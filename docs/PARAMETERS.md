@@ -128,7 +128,11 @@ was not used to choose the values.
    (DRG uses d = −n·v: approaching static targets are negative). Flip the sign if needed.
 2. Set the field-of-view limits (`max_azimuth_deg`, `max_elevation_deg`, `max_range`).
 3. Re-measure the RCS repeatability and set `tau_rcs`. Set `tau_residual` to a few times the
-   median residual difference of true matches.
+   median residual difference of true matches. `scripts/gate_repeatability.py --dump <dump> --gt <gt.txt>`
+   measures both and prints what the gate keeps for a grid of thresholds. On the Continental ARS548 of
+   SNAIL-Radar (integer dBsm, median residual difference 0.012 m/s) the paper's values keep 34 % of the
+   true matches; 2 dB and 0.05 m/s (`config/snail_radar/ars548_gate.yaml`) keep 83 %
+   ([results/snail_radar/README.md](../results/snail_radar/README.md)).
 4. Recompute the normalisation statistics (`scripts/compute_norm_stats.py`).
 5. Keep `sigma_v` / `sigma_g` unless your frame rate or ego-velocity accuracy differs a lot. The
    weight then follows from Δt alone.

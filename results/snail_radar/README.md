@@ -5,7 +5,8 @@ parameters**, runs on five sequences of [SNAIL-Radar](https://snail-radar.github
 20240115_2, 20240123_2 and 20240123_3 (the SUV sequences). It is radar-only scan-to-scan odometry, with no IMU and
 no loop closure, chained over the whole run. On the ARS548 the same odometry is also the front end of the
 full 4DRadarSLAM system, run with loop closure off and on. These results were computed on 18-19 Nov 2026 and scored
-on 24 Nov 2026 with [evo](https://github.com/MichaelGrupp/evo).
+on 24 Nov 2026 with [evo](https://github.com/MichaelGrupp/evo); the two `*_gate` variants, the only ones that change a
+parameter of the paper, were added on 25 Nov 2026 ([below](#re-tuning-the-gate-for-the-ars548)).
 
 ## Radars and inputs
 
@@ -15,14 +16,26 @@ on 24 Nov 2026 with [evo](https://github.com/MichaelGrupp/evo).
 | `oculii_single_frame` | Oculii Eagle, `/radar_pcl2`, the single-frame cloud | paper parameters |
 | `ars548_soft_reve` | Continental ARS548, `/ars548`, the whole scan; DRG's Soft-REVE weights handle moving returns, as in the paper | paper parameters, RCS floor off ([`config/snail_radar/ars548.yaml`](../../config/snail_radar/ars548.yaml)) |
 | `ars548_reve_filter` | the same, but each scan first reduced to its REVE inliers (static returns) | the same |
+| `ars548_soft_reve_gate` | as `ars548_soft_reve` | the Doppler–RCS gate re-tuned to the ARS548, `tau_rcs` 2 dB and `tau_residual` 0.05 m/s ([`config/snail_radar/ars548_gate.yaml`](../../config/snail_radar/ars548_gate.yaml)); see [below](#re-tuning-the-gate-for-the-ars548) |
+| `ars548_reve_filter_gate` | as `ars548_reve_filter` | the same |
 
 * **Oculii accumulative cloud.** The geometry of `/radar_enhanced_pcl2` advances by one 15 Hz Eagle frame per
   published scan, whatever the time between the stamps: placed at the ground-truth poses of their stamps, two scans
   overlay best at that fixed step, not at the stamp difference. Scan matching on it therefore under-measures the
   motion, rotation included. The single-frame cloud does not have this problem, but it is too sparse for DRG's
   descriptor matching.
-* **ARS548 RCS.** The ARS548 reports calibrated RCS in dBsm, mostly below 0 dB, so DRG's 0 dB RCS floor is switched
-  off. Nothing else is changed.
+* **ARS548 RCS.** The ARS548 reports a calibrated radar cross section in dBsm (0 dBsm = 1 m²) as an integer from
+  −20 to +55: over the five sequences the median is −4 dBsm and 66 % of all returns (74 % of those within DRG's
+  range limits) are at or below 0 dBsm, because most street returns are smaller than a 1 m² reflector. The field the
+  paper calls RCS on the Oculii Eagle is the detection's signal-to-noise ratio in dB, never negative, so DRG's 0 dB
+  floor removes nothing on the paper's data and would remove most of an ARS548 scan: for the ARS548 it is switched
+  off ([`config/snail_radar/ars548.yaml`](../../config/snail_radar/ars548.yaml)). Sources: the
+  [SNAIL-Radar data format](https://snail-radar.github.io/docs/format.html) (`/ars548` `intensity`: RCS in dB·m²;
+  `/radar_enhanced_pcl2` `Power`: return strength proportional to RCS), Continental's *Short Description ARS 548 RDI*
+  (2021, [PDF](https://snail-radar.github.io/docs/manuals/Short_Description_2021_09_16-00_ARS548RDI_en_V1.0.pdf),
+  p. 12: the RDI data "is calibrated and aligned"; p. 17: RCS dynamic range −10 to +40 dBm²) and the Oculii *Eagle G7*
+  manual (Dec 2021, [PDF](https://snail-radar.github.io/docs/manuals/Manual%20Edition%200.5.41%20Dec2021%20Eagle%20G7.pdf),
+  p. 26: "Power value is in dB scale and represents the signal to noise ratio of the detection").
 * Normalisation statistics: every 10th scan of each sequence, as in the paper
   ([`config/norm_stats/snail_radar/`](../../config/norm_stats/snail_radar)).
 
@@ -42,6 +55,49 @@ scan pairs from the identity as a single chain. A pair whose registration fails 
 | failed pairs (identity) | | 0 / 0 / 0 / 0 / 0 | 18 / 63 / 151 / 94 / 52 | 0 / 1 / 17 / 4 / 3 | 0 / 8 / 20 / 12 / 7 |
 
 <p align="center"><img src="trajectories.png" width="900"></p>
+
+## Re-tuning the gate for the ARS548
+
+DRG's Doppler–RCS gate keeps a correspondence only if its two returns agree in RCS within `tau_rcs` = 1 dB and in
+ego-compensated Doppler residual within `tau_residual` = 0.01 m/s. Both thresholds were set on the Oculii Eagle, and
+the paper says they may need re-tuning for other sensors. `scripts/gate_repeatability.py` measures what the gate does
+to **true matches**, with the paper's protocol: a return of the source scan that the ground-truth motion maps within
+0.1 m of a return of the target scan; 150 evenly spaced consecutive pairs per sequence, randomly paired returns as the
+reference:
+
+| radar | true matches per pair | identical RCS | \|ΔRCS\| ≤ 1 dB | \|Δe\| ≤ 0.01 m/s | **both (paper gate)** | random pairs | median \|Δe\| [m/s] | 2 dB and 0.05 m/s: true / random |
+|---|---|---|---|---|---|---|---|---|
+| Oculii Eagle, NTU4DRadLM cp (the paper's tuning data) | 3,788 | 85.7 % | 91.5 % | 90.8 % | **88.1 %** | 4.1 % | 0.0003 | 93.9 % / 26.4 % |
+| Oculii Eagle, NTU4DRadLM loop3 | 1,174 | 74.8 % | 82.4 % | 79.8 % | **72.6 %** | 2.8 % | 0.0019 | 85.2 % / 21.4 % |
+| Oculii Eagle, SNAIL accumulative cloud (5 sequences) | 2,248 | 49.5 % | 69.1 % | 60.1 % | **49.7 %** | 4.2 % | 0.0009–0.0094 | 70.1 % / 14.3 % |
+| Continental ARS548, SNAIL (5 sequences) | 45 | 42.0 % | 75.0 % | 43.6 % | **33.7 %** | 2.8 % | 0.0109–0.0126 | 82.6 % / 12.2 % |
+
+On the paper's data the gate keeps 88 % of the true matches; on the ARS548 it keeps 34 %.
+Two sensor properties explain the difference. The ARS548 transmits its RCS as an integer in dBsm, so two measurements
+of the same target differ by at least 1 dB in 58 % of the true matches and by more than 1 dB in
+25 %, where the Eagle's value in 0.01 dB steps repeats exactly for 86 % of them (the
+paper reports 85 %). And its Doppler residuals are noisier: the median
+residual difference of true matches, 0.011–0.013 m/s, is the paper's threshold itself,
+whereas on cp the threshold is about 30 times the median. The paper's own rules, `tau_residual` at 3–10 times that
+median and `tau_rcs` wide enough for the quantisation, give **2 dB and 0.05 m/s**
+([`config/snail_radar/ars548_gate.yaml`](../../config/snail_radar/ars548_gate.yaml)): they keep 83 % of the
+true matches and 12 % of random pairs. The thresholds come from these noise statistics, not from the
+odometry error; the ground truth only identifies the true matches.
+
+With them, both ARS548 variants were run again on 25 Nov 2026, everything else unchanged (RCS floor off, 40 RANSAC
+trials, the same normalisation statistics). ATE [m] over the whole run, the lower of the two in bold:
+
+| sequence | Soft-REVE only: paper gate → re-tuned | REVE filter + DRG: paper gate → re-tuned |
+|---|---|---|
+| 20240113_1 | 5.02 → **4.06** (failed pairs 0 → 0) | 7.39 → **6.88** (failed pairs 0 → 0) |
+| 20240113_3 | 369.52 → **163.08** (failed pairs 1 → 0) | 436.14 → **253.90** (failed pairs 8 → 1) |
+| 20240115_2 | 805.51 → **155.12** (failed pairs 17 → 0) | 598.12 → **263.99** (failed pairs 20 → 2) |
+| 20240123_2 | 183.99 → **77.95** (failed pairs 4 → 0) | 340.85 → **133.56** (failed pairs 12 → 0) |
+| 20240123_3 | 121.42 → **37.64** (failed pairs 3 → 1) | 133.89 → **130.01** (failed pairs 7 → 3) |
+
+The re-tuned gate lowers the ATE on 5 of 5 sequences for Soft-REVE only and 5 of 5 sequences for REVE filter + DRG. These are five sequences without a significance test, and the ATE of
+a chain over several kilometres depends on where its few worst pairs fall; the per-pair statistics of each run are in
+`odometry/<variant>/<seq>/`. The 4DRadarSLAM runs below use the paper's thresholds.
 
 ## DRG as the front end of 4DRadarSLAM (ARS548), without and with loop closure
 
@@ -101,6 +157,9 @@ python3 scripts/register_dump.py --dump dumps/oculii_enhanced/20240113_1 \
 
 `scripts/compute_norm_stats.py --dump ... --params config/snail_radar/ars548.yaml` recomputes the statistics with the
 variant's limits. On the ARS548, SNAIL's `times.txt` lists 6 stamps twice; `snail_to_dump.py` keeps one scan per stamp.
+The `*_gate` variants pass `--params config/snail_radar/ars548_gate.yaml` to `register_dump.py` (the statistics do not
+depend on the gate), and `scripts/gate_repeatability.py --dump <dump> --gt <gt in the radar frame> --params
+config/snail_radar/ars548.yaml --max-gt-gap 0.15` reproduces the table above for one sequence.
 
 This folder contains information from the SNAIL-Radar dataset, which is made available under the Open Database
 License. Please cite it when you use these results:

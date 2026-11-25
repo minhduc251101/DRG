@@ -1,0 +1,12 @@
+# DRG on the Continental ARS548 of SNAIL-Radar with the Doppler-RCS gate re-tuned to this radar
+# (results/snail_radar, variants *_gate). The paper set tau_rcs and tau_residual on the Oculii Eagle, whose
+# "RCS" is an SNR in 0.01 dB steps with a very repeatable value, and whose Doppler residuals are tight.
+# The ARS548 reports true RCS as an integer in dBsm and has a noisier Doppler, so with the paper's values the gate
+# kept only 34 % of the true matches (88 % on the paper's data). Applying the paper's own rules to the ARS548's
+# measured statistics (scripts/gate_repeatability.py: tau_residual at 3-10x the median residual difference of
+# true matches, tau_rcs wide enough for the RCS repeatability) gives the values below; they keep 83 % of the true
+# matches and 12 % of random pairs. The RCS floor is off as in ars548.yaml. Everything else is the paper's.
+drg:
+  min_rcs: -1000.0
+  tau_rcs: 2.0
+  tau_residual: 0.05
