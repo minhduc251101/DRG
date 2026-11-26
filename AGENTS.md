@@ -4,6 +4,37 @@ You are setting up and running DRG for a user. DRG registers consecutive 4D rada
 
 Take the user from a fresh machine to the paper's DRG results on the six NTU4DRadLM sequences: the per-pair errors of Table 1 and the drift of Table 3. Follow the steps in order. Run every command yourself, check its output before moving on, and stop to ask the user only where a step says **Ask**. Every expected output below was checked on a fresh clone of this repository (25 Nov 2026), except where a step says otherwise.
 
+## Prompt for Claude Code
+
+*This section is for the person who hands this file to an agent. The agent starts at section 0.*
+
+Start [Claude Code](https://code.claude.com/docs/en/overview) (`claude` in a terminal) in an empty folder or in a clone of this repository, and paste:
+
+```text
+Clone https://github.com/minhduc251101/DRG.git and work in the clone
+(skip this if the current folder is already a clone of it).
+Then follow its AGENTS.md to reproduce the DRG paper's results on this machine:
+- First ask me the questions of section 0 that this message does not answer,
+  and wait for my answers.
+- Run the steps in order, and run every command yourself. Before you move on,
+  compare the output with the expected output in AGENTS.md.
+  If a check fails, stop and show me both.
+- Never change parameters, package versions or the scoring to make a number match.
+  Do not edit files that git tracks, and ask me before you use sudo.
+- End with the report of section 11.
+```
+
+Claude Code then asks the questions of section 0: what to run, which Python environment to use, where NTU4DRadLM is and where to write the results. To skip them, add the answers at the end of the prompt, for example `Run A and B. Make a new venv with python3.11. NTU4DRadLM is in /data/NTU4DRadLM.` **A** always comes first; B, C and D are independent of each other:
+
+| | What runs | What you need |
+|---|---|---|
+| **A** | The unit tests, then one window of the paper's input (31 scans of loop3, shipped in `example/`), compared with the paper's estimates. A few minutes. | Python 3.8–3.11 and about 2 GB of disk. No dataset. |
+| **B** | Tables 1 and 3, recomputed from DRG's released estimates. Under a minute. | The six `gt_odom.txt` files of NTU4DRadLM (about 6 MB). |
+| **C** | DRG on every scan pair, as in the paper. About 2 h with 16 processes. | The per-scan dumps (about 21 GB), made with ROS Noetic and a pinned Go-RIO from the bags (49 GB). |
+| **D** | The ROS node on a rosbag, starting with a 10 s test on loop3. | ROS Noetic on Ubuntu 20.04, and the bags. |
+
+At the end it reports which level it reached, compares every result with its expected value and lists any difference (section 11). Other coding agents can be given the same prompt.
+
 ## 0. Ask the user first
 
 **Ask**, in a single message:

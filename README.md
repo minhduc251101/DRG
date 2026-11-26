@@ -19,7 +19,7 @@
   Tiancheng Li, Zhenzi Li, Alen Alempijevic, Shoudong Huang, Australasian Conference on Robotics and
   Automation (ACRA), 2026.
 - **Tutorial**: 📂 [`example/example.ipynb`](example/example.ipynb), the six stages on real radar data. It needs no ROS and no dataset download.
-- **Setup guide for coding agents**: 📂 [`AGENTS.md`](AGENTS.md), step by step from a fresh machine to the paper's Tables 1 and 3, with the expected output of every command. A coding agent can follow it as it is, and so can a person. To hand it to Claude Code, paste the prompt in [Reproduce with Claude Code](#-reproduce-with-claude-code).
+- **Setup guide for coding agents**: 📂 [`AGENTS.md`](AGENTS.md), step by step from a fresh machine to the paper's Tables 1 and 3, with the expected output of every command. A coding agent can follow it as it is, and so can a person. It opens with the prompt that hands it to Claude Code, see [Reproduce with Claude Code](#-reproduce-with-claude-code).
 - **Released results**: 📂 [`results/`](results/README.md), all from a rerun of this code: DRG's estimate for every consecutive scan pair of the six sequences (the paper's Tables 1 and 3 are recomputed from them), the whole-run trajectories with their `evo_ape -va` results and plots, and the same odometry in the full 4DRadarSLAM system with and without loop closure. Not in the paper: the same code on SNAIL-Radar ([`results/snail_radar/`](results/snail_radar/README.md)).
 
 <p align="center">
@@ -162,40 +162,26 @@ python3 scripts/reproduce_windowed_sets.py --datasets example/datasets.yaml --se
 
 ## 🤖 Reproduce with Claude Code
 
-[`AGENTS.md`](AGENTS.md) guides a coding agent from a fresh machine to the paper's Tables 1 and 3,
-with the expected output of every command. To let [Claude Code](https://code.claude.com/docs/en/overview)
-do the work, start it (`claude` in a terminal) in an empty folder or in a clone of this repository,
-and paste this prompt:
+[`AGENTS.md`](AGENTS.md) is the instruction file for coding agents. It takes an agent from a fresh
+machine to the paper's Tables 1 and 3, step by step, with the expected output of every command, and
+it opens with the prompt that hands it to [Claude Code](https://code.claude.com/docs/en/overview).
 
-```text
-Clone https://github.com/minhduc251101/DRG.git and work in the clone
-(skip this if the current folder is already a clone of it).
-Then follow its AGENTS.md to reproduce the DRG paper's results on this machine:
-- First ask me the questions of section 0 that this message does not answer,
-  and wait for my answers.
-- Run the steps in order, and run every command yourself. Before you move on,
-  compare the output with the expected output in AGENTS.md.
-  If a check fails, stop and show me both.
-- Never change parameters, package versions or the scoring to make a number match.
-  Do not edit files that git tracks, and ask me before you use sudo.
-- End with the report of section 11.
-```
+1. Start Claude Code (`claude` in a terminal) in an empty folder or in a clone of this repository.
+2. Paste the prompt from [`AGENTS.md`, section "Prompt for Claude Code"](AGENTS.md#prompt-for-claude-code).
+   Its short form is:
 
-Claude Code clones the repository, reads `AGENTS.md` and asks what to run, which Python environment
-to use, where NTU4DRadLM is and where to write the results. **A** always comes first:
+   ```text
+   Clone https://github.com/minhduc251101/DRG.git if this folder is not already a clone of it,
+   then read AGENTS.md and follow it to reproduce the DRG paper's results on this machine.
+   ```
 
-| | What runs | What you need |
-|---|---|---|
-| **A** | The unit tests, then one window of the paper's input (31 scans of loop3, shipped in `example/`), compared with the paper's estimates. A few minutes. | Python 3.8–3.11 and about 2 GB of disk. No dataset. |
-| **B** | Tables 1 and 3, recomputed from DRG's released estimates. Under a minute. | The six `gt_odom.txt` files of NTU4DRadLM (about 6 MB). |
-| **C** | DRG on every scan pair, as in the paper. About 2 h with 16 processes. | The per-scan dumps (about 21 GB), made with ROS Noetic and a pinned Go-RIO from the bags (49 GB). |
-| **D** | The ROS node on a rosbag, starting with a 10 s test on loop3. | ROS Noetic on Ubuntu 20.04, and the bags. |
+3. Answer its questions (what to run, which Python environment, where NTU4DRadLM is, where to write
+   the results), or append the answers to the prompt to skip them.
 
-To skip the questions, add your answers at the end of the prompt, e.g.
-`Run A and B. Make a new venv with python3.11. NTU4DRadLM is in /data/NTU4DRadLM.`
-
-At the end, Claude Code reports which level it reached, compares every result with its expected value
-and lists any difference. Other coding agents can be given the same prompt.
+What it can run is listed in `AGENTS.md`, section 0: from the install check without any dataset
+(level A, a few minutes) to Tables 1 and 3 from the released estimates (B), a rerun of DRG on every
+scan pair (C) and the ROS node on a rosbag (D). At the end, Claude Code reports which level it reached
+and compares every result with its expected value. Other coding agents can be given the same prompt.
 
 ## Installation
 
@@ -361,7 +347,7 @@ evo_ape tum stamp_gt_traj.txt stamp_est_traj.txt -va --save_results evo_ape.zip 
 The paper's results are DRG's estimates of every consecutive scan pair, scored against the ground truth
 (Tables 1 and 3, and the trajectories of Fig. 4). There are three ways to get them.
 [`AGENTS.md`](AGENTS.md) goes through all three step by step, with the expected output of every command.
-To let Claude Code follow it for you, use the prompt in [Reproduce with Claude Code](#-reproduce-with-claude-code).
+To let Claude Code follow it for you, use the prompt at the top of `AGENTS.md`, see [Reproduce with Claude Code](#-reproduce-with-claude-code).
 
 **(a) Run DRG on every scan pair, as the paper did.** The paper registers the per-scan clouds that
 4DRadarSLAM (Go-RIO version) writes with its `/radar_graph_slam/dump` service (one folder per scan, with
